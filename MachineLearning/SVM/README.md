@@ -167,9 +167,9 @@ The regularization parameter C controls the trade-off between:
 1. Maximizing the margin (keeping $||w||$ small)
 2. Minimizing classification errors (keeping $\sum (ξ_i)$ small)
 
-High C value assigns large penalties to misclassifications and forces the model to classify training data more accurately. The result is a narrower margin which results in the model prone to overfit, especially with noisy data.
+High C value assigns large penalties to misclassifications and forces the model to classify training data more accurately. The result is a narrower margin which makes the model prone to overfit, especially with noisy data.
 
-Low C values, on the other hand, make the model more tolerant of misclassifications, prioritizes a wider margin. This results in a simpler, more generalized model, prone to underfitting as it misses important patterns.
+Low C values, on the other hand, make the model more tolerant of misclassifications and prioritizes a wider margin. This results in a simpler, more generalized model, prone to underfitting as it misses important patterns.
 
 Choosing C is typically done through cross-validation. Start with C=1 and adjust based on validation performance.
 
@@ -438,7 +438,7 @@ $$
 This is the most powerful and popular kernel. It creates "islands" or complex contours around data points. This is based on the concept of similarity through proximity. It can create circular, elliptical or arbitrary-shaped boundaries and it maps to an infinite-dimensional feature space.
 
 The RBF kernel measures similarity based on distance:
-- Points close together $\rightarrow$ High kernel value $\rightarrow$ High similarity $\rightarrow$ Likely same classes
+- Points close together $\rightarrow$ High kernel value $\rightarrow$ High similarity $\rightarrow$ Likely same class
 - Points far apart $\rightarrow$ Low kernel value $\rightarrow$ Low similarity $\rightarrow$ Likely different classes
 
 The function value decreases exponentially with distance, creating a localized influence around each point.
@@ -648,7 +648,7 @@ Where:
 
 In SVR, support vectors are the training points that lie:
 - On the boundary of the ε-tube
-- Outside the ε-tube (poins with errors larger than ε)
+- Outside the ε-tube (points with errors larger than ε)
 
 Points inside the tube (with errors $< ε$) have $a_i=0$ and don't influence the model.
 
@@ -967,7 +967,7 @@ SVM works because:
 
 #### Image Recognition
 
-SVMs are also used for Image Recognition problems (such as Face Detection, handwritten digit recognition, object recognition). Before Deep Learning (which are now mainly used for these problems). 
+SVMs are also used for Image Recognition problems (such as Face Detection, handwritten digit recognition, object recognition), especially before Deep Learning became mainstream (which are now mainly used for these problems).
 
 SVM Works because:
 - With appropriate feature extraction (e.g., HOG, SIFT), images can be effectively classified
@@ -1026,7 +1026,7 @@ SVMs are effective even with relatively small training sets. This matters becaus
 
 #### Handles Non-Linear Relationships
 
-Kernel trick enables complex decision boundaries without manual feature engineering. This matters because SVMs automatically find non-linear patterns, there is no need to manually create polynomial features. It can capture arbitrarily complex relationships
+Kernel trick enables complex decision boundaries without manual feature engineering. This matters because SVMs automatically find non-linear patterns, there is no need to manually create polynomial features. It can capture arbitrarily complex relationships.
 
 #### Strong Theoretical Foundation
 
