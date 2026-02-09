@@ -69,6 +69,7 @@ Understanding the mathematics behind SVM is crucial for appreciating its eleganc
 
 #### HyperPlane Definition
 In mathematical terms, the decision boundary (hyperplane) in SVM is defined by the equation:
+
 $$
 w \cdot x+b=0
 $$
@@ -86,6 +87,7 @@ Where:
 In 2D space, this represents a line. In 3D, it's a plane. In higher dimensions, it's called a hyperplane. The vector w determines the orientation of the hyperplane, while b determines its position relative to the origin.
 
 The perpendicular distance from a data point $x_i$ to the decision boundary is given by:
+
 $$
 d_i = |w \cdot x_i + b| / \left\| w \right\|
 $$
@@ -99,6 +101,7 @@ This formula is fundamental because the margin is defined in terms of these dist
 #### The Margin Formula
 
 The margin is given by:
+
 $$
 Margin = 2 / \left\| w \right\|
 $$
@@ -106,6 +109,7 @@ $$
 This means that to maximize the margin, we need to minimize $\left\| w \right\|$. This is the core insight that transforms the intuitive goal into a concrete mathematical optimization problem.
 
 Once we have the hyperplane, classifying a new point x is straightforward:
+
 $$
 \hat y = w \cdot x + b
 $$
@@ -172,6 +176,7 @@ Choosing C is typically done through cross-validation. Start with C=1 and adjust
 
 #### The Objective Function Interpretation
 The soft margin objective can be rewritten as:
+
 $$
 \text{Minimize:} \quad (1/margin) + \gamma \sum(penalty)
 $$
@@ -183,6 +188,7 @@ This shows explicitly that we're balancing two competing goals:
 #### Hinge Loss Function
 
 The penalty term in soft margin SVM can be understood through the hinge loss function, which has the following behavior:
+
 $$
 L(y,f(x)) = max(0, 1- y \cdot f(x))
 $$
@@ -257,9 +263,11 @@ Properties of Support Vectors:
 </p>
 
 The decision function can be mathematically written in terms of support vectors:
+
 $$
 f(x) = \sum (a_i \cdot y_i \cdot K(x_i, x)) + b
 $$
+
 Where the sum is only over support vectors (points where $a_i>0$), and:
 - $a_i$ are the Lagrange multipliers (learned during training)
 - $y_i$ are the class labels of support vectors
@@ -384,6 +392,7 @@ The advantages of a linear kernel is that it is fast in training and prediction,
 #### Polynomial Kernel
 
 The polynomial kernel function is:
+
 $$
 K(x_i, x_j) = (\gamma(x_i \cdot x_j) + r)^d
 $$
@@ -464,7 +473,8 @@ Limitations:
 
 #### Sigmoid Kernel
 
-This is similar to the activation function in neural networks. Sometimes it is called the "neural network kernel". It creates S-shaped boundaries.
+This is similar to the activation function in neural networks. Sometimes it is called the "neural network kernel". It creates S-shaped boundaries:
+
 $$
 K(x_i, x_j) = tanh(\gamma(x_i \cdot x_j) + r)
 $$
@@ -514,12 +524,15 @@ The optimization problem we've discussed so far is called the primal problem. Ho
 4. Handles infinite dimensions
 
 **Primal Problem** *(what we want to solve)*:
+
 $$
 \text{Minimize: } (1/2)||w||^2 + C \sum ξ_i
 $$
+
 Subject to: $y_i(w \cdot x_i +b) \geq 1 - ξ_i \quad \text{and} \quad ξ_i \geq 0$
 
 **Dual Problem** *(what we actually solve)*:
+
 $$
 \text{Maximize:} \quad \sum a_i - (1/2)\sum \sum a_i a_j y_i y_j K(x_i, x_j)
 $$
@@ -548,6 +561,7 @@ The lagrange multipliers $a_i$ have important interpretations:
 The sparse nature of the solution (most $a_i=0$) is what makes SVMs memory-efficient.
 
 Once we solve the dual problem and obtain the $a_i$ values, the decision function for a new point x is:
+
 $$
 f(x) = \sum(a_i \cdot y_i \cdot K(x_i, x)) + b
 $$
@@ -561,6 +575,7 @@ This shows explicitly that:
 
 
 The **bias term b** is computed from support vectors that lie exactly on the margin ($0 < a_i < C$):
+
 $$
 b = y_i - \sum (a_j \cdot y_j \cdot K(x_j, x_i))
 $$
@@ -1089,7 +1104,7 @@ SVMs excel in specific scenarios that make them invaluable in the machine learni
 
 
 
-SVMs are not without limitations. Training time scales poorly ($O(n^2)$ to $O(n^3)$) making them impractical for very large datasets. They require careful hyperparameter tuning, and results need feature scaling. The kernel-based approach, while powerful, reduces interpretability compared to linear models or decision trees.
+SVMs are not without limitations. Training time scales poorly ($O(n^2)$ to $O(n^3)$ ) making them impractical for very large datasets. They require careful hyperparameter tuning, and results need feature scaling. The kernel-based approach, while powerful, reduces interpretability compared to linear models or decision trees.
 
 In the modern machine learning landscape, deep learning has superseded SVMs for tasks with massive datasets, particularly in computer vision, speech recognition, and natural language processing. However, this doesn't diminish SVMs' value—they remain the superior choice when:
 - Data is limited or expensive to collect
