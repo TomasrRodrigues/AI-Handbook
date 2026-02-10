@@ -6,8 +6,8 @@
 2. [How Decision Trees Work](#how-decision-trees-work)
 3. [Types of Decision Trees](#types-of-decision-trees)
 4. [Mathematical Foundations](#mathematical-foundations)
-[Splitting Criteria]
-[Handling Numerical Features]
+5. [Splitting Criteria](#splitting-criteria)
+6. [Handling Numerical Features](#handling-numerical-features)
 [Tree Construction Algorithms]
 [The Feature Selection Problem]
 [Pruning Strategies]
@@ -230,3 +230,79 @@ On average, we need about 0.97 bits of information to specify the class of a ran
 
 #### Information Gain
 
+Te reduction in entropy (or impurity) achieved by splitting on a particular feature. 
+
+$$
+IG(S, A) = H(S) - \sum_{v \in Values(A)} \frac{|S_v|}{|S|} H(S_v)
+$$
+
+Where:
+- $S$ is the parent node dataset
+- $A$ is the attribute (feature) being considered
+- $S_v$ is the subset of $S$ where attribute has value $v$
+- $|S|$ denotes the number of samples in $S$
+
+Information gain measuers how much knowing the value of attribute A reduces our uncertainty about the class label. The algorithm selects the attribute with the highest Information Gain for splitting.
+
+**Example**: Parent node entropy: $H(Parent)=0.971$.
+
+After split on $Age < 30$:
+- Left child (60 samples): $H(Left) = 0.5$
+- Right child (40 samples): $H(Right) = 0.3$
+
+$$
+IG = 0.971 - [(60/100)(0.5) + (40/100)(0.3)]
+$$
+
+$$
+IG = 0.971 - [0.3+0.12] = 0.971 - 0.42 = 0.551
+$$
+
+This split reduces entropy by 0.551 bits
+
+#### Gini Gain (Gini Reduction)
+
+For Gini impurity, the equivalent concept is Gini Gain:
+
+$$
+\Delta Gini = Gini(parent) - \sum \frac{|S_v|}{|S|} Gini (S_v)
+$$
+
+The algorithm maximizes Gini Gain (or minimizes the weighted Gini of Children).
+
+---
+## Splitting Criteria
+
+The algorithm must decide not just which feature to split on, but also how to split it. The approach differs for categorical and numerical features.
+
+#### Categorical Features
+
+For categorical (discrete) features, the split is straightforward:
+- Binary Trees (CART): Create split like $Color = Red$? (Yes/No) and one child gets samples where $Color = Red$ and the other child gets all other colors
+- Multi-way trees (ID3, C4.5): Create one branch for each categorical value. If $Color \in {Red, Blue, Green}$, create 3 branches
+
+The advantage is that it is natural and interpretable but multi-way splits can lead to data fragmentation (many small groups).
+
+#### Numerical Features
+
+Numerical (continuous) features require a threshold-based split. The challenge is we can't create a branch for every possible value (would create millions of branched and severe overfitting).
+
+The solution is to convert to binary decision using a threshold t:
+
+$$
+Feature \leq t ?   \rightarrow \text{Yes/No}
+$$
+
+
+#### The Missing Value Problem
+
+As we know, real-world data is not perfect and often contains missing values (usually, solved in data pre-processing but in this section we will consider that no pre-processing was done). The solutions for this case are:
+1. **Most common value**: Assign the most frequent value in that feature
+2. **Surrogate splits**: Find alternative features that correlate with the primary split
+3. **Separate branch**: Create a third branch specifically for missing values.
+4. **Ignore during split**: Don't consider samples with missing values when calculating split quantity
+
+**CART approach**: Uses surrogate splits - if the primary split feature is missing, it uses the next best feature that tends to produce similar splits
+
+---
+## Handling Numerical Features
