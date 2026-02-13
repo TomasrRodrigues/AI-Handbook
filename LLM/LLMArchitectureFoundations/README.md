@@ -281,8 +281,6 @@ A programmer can describe what they want a function to do in plain English, and 
 
 Despite these impressive capabilities, it's crucial to understand the **limitations of large language models**.
 
-#### The Nature of LLM Understanding
-
 These systems **don't truly understand language the way humans do** - they are sophisticated pattern matching systems that have learned statistical relationships between words and concepts. This means they can sometimes generate text that sounds confident and fluent but is factually incorrect. 
 
 **Hallucinations**: Researchers call these errors "hallucinations" - the model generates plausible-sounding information that isn't actually true. The model might:
@@ -292,15 +290,12 @@ These systems **don't truly understand language the way humans do** - they are s
 
 This happens because models learn patterns about how information is formatted without having access to a reliable database of facts.
 
-#### Reasoning Limitations
 
 Large language models struggle with certain types of reasoning that humans find relatively straightforward:
 
 - **Mathematical calculations**: Difficulty with precise calculations, especially with larger numbers
 - **Multi-step logical reasoning**: Can be challenging, though this has improved significantly with techniques like **chain-of-thought prompting** that encourage the model to break down its reasoning into explicit steps
 - **Physical world understanding**: Models lack true understanding of the physical world - they know about physics only through textual descriptions, not through embodied experience, which can lead to mistakes in reasoning about spatial relationships or physical causality
-
-#### Bias and Ethical Concerns
 
 Another important limitation is that these models **learn from their training data**, which means they can perpetuate and amplify biases present in that data. If the training data contains biased viewpoints about certain groups of people, the model will learn and may reproduce those biases. 
 
@@ -312,3 +307,104 @@ Another important limitation is that these models **learn from their training da
 
 ---
 ## Tokenization
+
+Before any Large Language Model can begin to process text, that text must first be broken down into units that the model can work with. This fundamental preprocessing setp is called tokenization, and while it might seem like a minor technical detail, the way we choose to tokenize text has profound implications for model performance, efficiency and capabilities. Tokenization is the bridge between raw text as humans write it and the numerical representations that neural networks require.
+
+At its most basic level, tokenization is the process of converting a string of text into a sequence of smaller units called tokens. These tokens become the vocabulary items that the model understands - the building blocks from which the model constructs its understanding of language. When we type a sentence into a language model interface, that sentence is first tokenized before any of the sophisticated neural network processing we disussed earlier can begin. The choice of how to break text into tokens fundamentally shapes what patterns the model can learn and how efficiently it can process different types of text.
+
+To understand why tokenization matters, consider the challenge that language model face. Neural networks work with numbers, not words. Each token in the model's vocabulary is assigned a unique integer identifier, and these identifiers are used to look up the embeddings that we discussed earlier. The tokens we choose as our vocabulary directly determine what the model considers to be atomic units of meaning. If our tokens are individual characters, the model must learn to assemble those characters into meaningful words. If our tokens are complete words, the model can work directly with word-level meaning but struggles with rare or unknown words.
+
+The question of how to tokenize text might seem to have an obvious answer: just split on spaces to separate words. This approach, called word-level tokenization, is intuitive and was used by many earlt natural language processing systems. For a sentence like $\text{"The cat sat on the mat."}$, word-level tokenization produces six word tokens plus punctuation:
+
+$$
+\text{"The cat sat on the mat."} \quad \xrightarrow{Tokenization} \quad \text{["The","cat","sat","on","the","mat","."]}
+$$
+
+This seems natural because it matches how we think about language - as sequence of words. However, this straightforward approach reveals significant problems when we examine it more closely.
+
+The first issue with word-level tokenization is vocabulary size. Natural languages contain enormous numbers of distinct words. English has hundreds of thousands of words in common use and the number grows even larger when we include proper names, technical terms and inflected forms. If we want our model to handle all possible words, we need an enormous vocabulary, which means an enormous embedding matrix. Remember that each word needs its own embedding vector, so a vocabulary of 500,000 words with embedding dimension 768 would require 384 million parameters just for the embeddings - a substantial portion of the total parameters even in large models.
+
+
+More problematic is how word-level tokenization handles rare and unknown words. During training, the model only sees a finite amount of text, which means many valid words will be extremely rare or completely absent from the training data. Words that appear only once or twice won't have well-learned embeddings because there weren't enough examples for the model to understand how they're used. Words that never appear in the training data pose an even worse problem. The standard solution is to include a special unknown word token, typically written as ${\text[UNK]}$ or $\text{<unk>}$, that represents any word not in the vocabulary. But this approach loses information. The words "antidisestablishmentarianism" and "pseudopseudohypoparathyroidism" are both rare medical or technical terms, but if neither appears in your vocabulary, they would both be converted to the same ${\text[UNK]} token, losing the distinction between them.
+
+Word-level tokenization also misses important relationships between related words. Consider the words "care", "cares", "cared", "caring", "careful", "carefully", "careless", "carelessly", and "carelessness". These are all morphologically related - they're different forms or derivatives of the same root word "care". But word-level tokenization treats each as a completely separate vocabulary item with its own embedding. The model must learn the relationships between these forms from scratch based on how they're used in context, rather than being able to leverage their obvious structural similarity. This makes learning less efficient and requires more training data to achieve the same level of understanding.
+
+
+### Character-Level Tokenization
+
+At the opposite extreme from word-level tokenization is character-level tokenization, where text is broken down into individual characters:
+
+$$
+\text{"CAT"} \quad \xrightarrow{Tokenization} \quad \text{["C","A","T"]}
+$$
+
+This approach solves the vocabulary size problem completely. English only needs about 100 characters including uppercase and lowercase letters, digits, punctuation and a few special characters. There's no concept of an unknown word because any word, no matter how rare or how it's spelled, can be represented as a sequence of know characters.
+
+Character-level tokenization also naturally handles morphology. Since $\text{"care"}$, $\text{"cared"}$ and $\text{"caring"}$ all share the character sequence $\text{"c-a-r"}$, a character-level model can potentially learn to recognize this shared structure and understand that these words are related. The model can handle misspelings, creative spellings and made-up words more gracefully because it's working at the level of characters rather than trying to match against a fixed vocabulary of complete words. If someone writes $\text{"soooo"}$ with extra o's for emphasis, a character-level model can process this just as easily as $\text{"so"}$, whereas a word-level model might not have $\text{"soooo"}$ in its vocabulary.
+
+However, character-level tokenization introduces severe drawbacks that make it impractical for most applications. The most obvious problem is sequence length. That simple sentence $\text{"The cat sat on the mat"}$ has seven word-level tokens but 22 character-level tokens when we count spaces and punctuation. For a long document, character-level tokenization might produce sequences tens of thousands of tokens long. This is a serious problem because transformer models have computational complexity that grows quadratically with sequence length. Processing a sequence that's three times longer requires nine times as much computation in the attention layers. This makes character-level tokenization prohibitively expensive for long documents.
+
+More fundamentally, character-level tokenization makes the model's learning task much harder. Individual characters carry very little semantic information by themselves. The character $\text{"c"}$ in isolation doesn't mean anything - meaning emerges from combinations of characters into words and from combinations of words into sentences. This means a character-level model must first learn to assemble characters into word-like units, then learn word meanings, then learn how words combine into sentences. We're asking the model to learn at a very low level of abstraction, which requires more model capacity and more training data to achieve the same level of performance as a model working with more meaningful units.
+
+### The Subword Solution
+
+The solution that modern Large Language Models use is subword tokenization, which occupies the middle ground between word-level and character-level approaches. The key insight is that words can be broken into meaningful pieces that are larger than individual characters but smaller than complete words. Common words remain intact as single tokens, while less common words are split into subword pieces that the model can compose to understand the full word.
+
+Consider the word $\text{"unhappiness"}$. A subword tokenizer might break this into $\text{"un"}$, $\text{"happy"}$ and $\text{"ness"}$. Each of these pieces carreis meaning: $\text{"un"}$ is a common prefix meaning $\text{"not"}$, $\text{"happy"}$ is a complete word, and $\text{"ness"}$ is a common suffix that turns adjectives into nouns. By learning embeddings for these subword pieces, the model can understand new words by composition. Even if it never saw $\text{"unhappiness"}$ during training, if it learned embeddings for $\text{"un"}$, $\text{"happy"}$ and $\text{"ness"}$ from other contexts, it can compose these to understand the meaning of $\text{"unhappiness"}$.
+
+This approach gives us several crucial benefits. First, we can control the vocabulary size to find a sweet spot - large enough to represent common words efficiently, but small enough to be manageable. Typical vocabulary sizes for modern models range from 30,000 to 50,000 tokens. This is much smaller than the hundreds of thousands of words in a language, but much larger than the hundred or so characters needed for character-level tokenization. With careful choice of subwords, this vocabulary size is sufficient to represent any text efficiently.
+
+This approach gives us several crucial benefits. First, we can control the vocabulary size to find a sweet spot - large enough to represent common words efficiently. Typical vocabulary sizes for modern models range from 30,000 to 50,000 tokens. This is much smaller than the hundreds of thousands of words in a language, but much larger than the hundred or so characters needed for character-level tokenization. With careful choice of subwords, this vocabulary size is sufficient to represent any text efficiently.
+
+
+Second, subword tokenization eliminates the unknown word problem. Even if a word never appeared in the training data, it can be represented as a sequence of subword tokens. The word "antidisestablishmentarianism" might be broken into pieces like "anti", "dis", "establish", "ment", "arian", "ism" - all of which are common morphemes that likely appeared in many other words during training. The model can understand the unfamiliar word by composing the meanings of its familiar pieces, similar to how a human might puzzle out the meaning of a long word by recognizing its morphological components.
+
+Third, subword tokenization naturally captures morphological relationships. Words like $\text{"run"}$, $\text{"running"}$, $\text{"runner"}$, and $\text{"runs"}$ all contain the subword $\text{"run"}$, allowing the model to learn that these words are related. Prefixes like $\text{"un"}$, $\text{"re"}$, $\text{"pre"}$, $\text{"dis"}$ and suffixes like $\text{"ing"}$, $\text{"ed"}$, $\text{"ness"}$, $\text{"tion"}$ can be learned as meaningful units, and the model can learn their systematic effects on word meaning. This makes learning more efficient and allows better generalization to new words formed by familiar morphological processes.
+
+### Byte Pair Encoding
+
+The most widely used subword tokenization algorithm is Byte Pair Encoding, or BPE. This algorithm was originally developed for data compression but was adapted brilliantly for natural language processing. The beauty of BPE is that it's completely data-driven - it learns what subwords are useful by analyzing actual text, rather than relying on linguistic knowledge about morphemes or word structure.
+
+BPE starts with a vocabulary containing individual characters. For English text, this initial vocabulary includes all the letters, digits, punctuation marks and any special characters that appear in the text. At this starting point, every word is represented as a sequence of character tokens. The word $\text{"lower}$ would be represented as the five character tokens $\text{"l"}$, $\text{"o"}$, $\text{"w"}$, $\text{"e"}$, $\text{"r"}$, typically with a special end-of-word symbol appended to mark word boundaries.
+
+The training process then repeatedly funds the most frequent pair of consecutive tokens in the training corpus and merges them into a single new token. This new token is added to the vocabulary and wherever that pair appears in the corpus, it's replaced by the new merged token. This process continues iteratively, with each iteration merging the most frequent pair and adding one new token to the vocabulary, until the vocabulary reaches the desired size.
+Let's walk through this process with a concrete example. Imagine we're training a BPE tokenizer on a tiny corpus containing the words $\text{"low"}$, $\text{"lower"}$, $\text{"lowest"}$, $\text{"newer"}$, $\text{"wider"}$, each appearing with some frequency. We represent each word with its character plus an end-of-word marker, which I'll write as $\text{"\_"}$ for clarity. So our corpus contains sequences like $\text{"low\_"}$, $\text{"lower\_"}$, $\text{"lowest\_"}$, $\text{"newer\_"}$ and $\text{"wider\_"}$.
+
+Now we count how often each pair of adjacent tokens appears. The pair $\text{"e r"}$ appears in $\text{"lower"}$, $\text{"newer"}$ and $\text{"wider"}$. The pair $\text{"lo"}$ appears in $\text{"low"}$, $\text{"lower"}$ and $\text{"lowest"}$. Let's say $\text{"e r"}$ is most frequent. We merge this pair into a new token $\text{"e r"}$ and update our corpus. Now $\text{"lower"}$ becomes $\text{"l o w er \_"}$, $\text{"newer"}$ becomes $\text{"n e w er \_"}$ and $\text{"wider"}$ becomes $\text{"w i d er \_"}$.
+
+In the next iteration, we might find that $\text{"er"}$ *(the $\text{"er"}$ token followed by the end-of-word marker) is now the most frequent pair*. We merge this into $\text{"er"}$, representing the common suffix. Our words become $\text{"l o w er \_"}$, $\text{"n e w er \_"}$, $\text{"w i d er \_"}$. We continue this process, perhaps next merging $\text{"l o"}$ into $\text{"lo"}$, then $\text{"lo w"}$ into $\text{"low"}$ and so on.
+
+After many iterations, our vocabulary contains not just individual characters but also common subwords that were discovered by the frequency-based merging process. Common complete words like $\text{"the"}$, $\text{"a"}$, $\text{"is"}$ will likely end up as single tokens because all their characters get merged together early in the training process since these words appear so frequently. Less common words will be split into pieces, with split points generally corresponding to natural morpheme boundaries because morphemes are reused across many words.
+
+The key insight that makes BPE work so well is that it automatically discovers meaningful subwords without any linguistic knowledge. If $\text{"ing"}$ appears at the end of many words, those $\text{"i"}$, $\text{"n"}$, $\text{"g"}$ sequences will be frequently adjacent and will get merged together early in training, creating an $\text{"ing"}$ token. If $\text{"un"}$ appears at the beginning of many words, it will be merged into a token. The algorithm discovers these patterns purely from frequencies in the data, but because language has systematic morphological structure, the discovered patterns correspond to linguistically meaningful units.
+
+When we want to tokenize new text with a trained BPE tokenizer, we apply the learned merge operations in the same order they were learned during training. We start with the character-level representation of each word, then apply each merge rule in sequence. For the word $\text{"newer"}$, we'd start with $\text{"n e w e r"}$, apply the merge that creates $\text{"er"}$ to get $\text{"n e w er "}$, apply the merge that creates $\text{"er"}$ to get $\text{"n e w er"}$ and apply any other relevant merges. The final tokenization depends on what merges were learned during training and what order they were learned in.
+
+One particularly clever variant of BPE is byte-level BPE, which is used by models like GPT-2 and GPT-3. Instead of starting with characters as the base vocabulary, byte-level BPE start with bytes - the raw UTF-8 byte encoding of text. Since any text in any language can be represented as a sequence of bytes from the range 0-255, this makes the tokenizer completely universal. It can handle English, Chinese, Arabic, emoji, mathematical symbols or any other content without special handling. The tokenizer simply treats everything as sequences of 256 possible byte values and learns to merge frequent byte sequences, exactly like standard BPE but operating at the byte level instead of the character level.
+
+Byte-level BPE has become increasingly popular because of this universitality. We don't need different tokenizers for different languages or writing systems. We don't need special preprocessing to handle unusual characters or symbols. Everything is just bytes and the merge operations learn whatever patterns are frequent in our training data, whether those patterns are English words, Chinese characters, emoji sequences or anything else. This makes it much easier to build truly multilingual models and models that can handle the full diversity of text found on the internet.
+
+### WordPiece and Other Approaches
+
+While BPE is the most widely used subword tokenization algorithm, other approaches exist with slightly different design choices. WordPiece used by BERT and related models, is very similar to BPE but uses a different criterion for choosing which pairs to merge. Instead of simply picking the most frequent pair, WordPiece chooses the pair that, when merged, maximizes the likelihood of the training data according to a language model.
+
+The intuition behind WordPiece's criterion is that we want to create tokens that are predictive - tokens that help us predict the surrounding context. Simply merging the most frequent pair might not always be the best choice if that pair doesn't have consistent meaning or usage patterns. By considering likelihood, WordPiece tries to find merges that create more coherent and meaningful tokens. In practice, BPE and WordPiece often produce similar vocabularies, but the likelihood-based criterion can lead to better tokenizations in some cases.
+
+WordPiece also uses a special convention where subword tokens that don't begin a word are marked with a prefix, typically $\text{"##"}$. So the word $\text{"unhappiness"}$ might be tokenized as $\text{"un"}$, $\text{"##happiness"}$ or $\text{"un"}$, $\text{"##happy"}$, $\text{"##ness"}$. The $\text{"##"}$ markers make it immediately clear which tokens are word beginnings and which are continuations. This can be useful for downstream tasks where we need to know word boundaries, such as named entity recognition where we need to identify which tokens are part of the same entity.
+
+Another approach is the Unigram language model tokenization algorithm, which takes a fundamentally different strategy. Instead of starting with characters and building up by merging, Unigram start with a large vocabulary of possible subwords that appear in the corpus with sufficient frequency, creating a very large intial vocabulary. It then iteratively removes tokens that, when removed, cause the smallest increase in loss according to a unigram language modek fit to the corpus.
+
+The Unigram approach has some theoretical advantages. BPE is a greedy algorithm that makes locally optimal choices at each step - merge the most frequent pair - but these choices might not lead to a globally optimal vocabulary. Unigram tries to find a better solution by considering the global effect of including or excluding each token. It asks: given all the other tokens in the vocabulary, does this particular token help us encode the corpus efficiently? If removing a token doesn't hurt much because the words it appeared in can be efficiently encoded using other tokens then that token can be pruned.
+
+
+A practical implementation of these subword tokenization approaches is provided by the SentencePiece library, which has become widely used in modern natural language processing. SentencePiece implements both BPE and Unigram algorithms with several useful enhancements. One key feature is that it treats spaces as regular characters, encoding them explicitly rather than treating them as special delimiters. This seemingly small choice makes the tokenizer truly language-agnostic - it can handle languages that don't use spaces to separate words, like Chinese or Japanese, using exactly the same algorithm as languages that do use spaces.
+
+When training a SentencePiece model, you provide a corpus of raw text and specify the desired vocabulary size and algorithm choice. The system samples from the corpus, runs the training algorithm, and produces a model file containing the learned vocabulary and merge rules. This model can then be used to consistently tokenize any new text. For multilingual models, you would train SentencePiece on a mixed corpus containing text in all the target languages, and it would learn a unified vocabulary that efficiently represents common patterns across all those languages.
+
+### PRactical Considerations and Challenges
+
+
+
+
+
+---
