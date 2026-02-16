@@ -446,9 +446,9 @@ At this starting point, every word is represented as a sequence of character tok
 4. Replace all occurrences of that pair in the corpus with the new merged token
 5. Repeat until the vocabulary reaches the desired size
 
-Let's walk through this process with a concrete example. Imagine we're training a BPE tokenizer on a tiny corpus containing the words $\text{"low"}$, $\text{"lower"}$, $\text{"lowest"}$, $\text{"newer"}$, $\text{"wider"}$, each appearing with some frequency. We represent each word with its character plus an end-of-word marker, which I'll write as $\text{"}\_\text{"}$ for clarity: 
+Let's walk through this process with a concrete example. Imagine we're training a BPE tokenizer on a tiny corpus containing the words $\text{"low"}$, $\text{"lower"}$, $\text{"lowest"}$, $\text{"newer"}$, $\text{"wider"}$, each appearing with some frequency. We represent each word with its character plus an end-of-word marker, which I'll write as $\text{"\\_"}$ for clarity: 
 
-**Initial corpus**: $\text{"low}\_\text{"}$, $\text{"lower}\_\text{"}$, $\text{"lowest}\_\text{"}$, $\text{"newer}\_\text{"}$, $\text{"wider}\_\text{"}$
+**Initial corpus**: $\text{"low\\_"}$, $\text{"lower\\_"}$, $\text{"lowest\\_"}$, $\text{"newer\\_"}$, $\text{"wider\\_"}$
 
 **Iteration 1**: Count adjacent token pairs
 - Pair $\text{"e r"}$ appears in $\text{"lower"}$, $\text{"newer"}$, and $\text{"wider"}$
@@ -456,15 +456,15 @@ Let's walk through this process with a concrete example. Imagine we're training 
 - Let's say $\text{"e r"}$ is most frequent
 
 We merge $\text{"e r"}$ into a new token $\text{"er"}$ and update our corpus:
-- $\text{"lower"}$ becomes $\text{"l o w er }\_\text{"}$
-- $\text{"newer"}$ becomes $\text{"n e w er }\_\text{"}$
-- $\text{"wider"}$ becomes $\text{"w i d er }\_\text{"}$
+- $\text{"lower"}$ becomes $\text{"l o w er \\_"}$
+- $\text{"newer"}$ becomes $\text{"n e w er \\_"}$
+- $\text{"wider"}$ becomes $\text{"w i d er \\_"}$
 
 **Iteration 2**: Find the next most frequent pair
-- Perhaps $\text{"er}\_\text{"}$ (the $\text{"er"}$ token followed by the end-of-word marker) is now most frequent
-- We merge this into $\text{"er}\_\text{"}$, representing the common suffix
+- Perhaps $\text{"er\\_"}$ (the $\text{"er"}$ token followed by the end-of-word marker) is now most frequent
+- We merge this into $\text{"er\\_"}$, representing the common suffix
 
-Our words become: $\text{"l o w er }\_\text{"}$, $\text{"n e w er }\_\text{"}$, $\text{"w i d er }\_\text{"}$
+Our words become: $\text{"l o w er \\_"}$, $\text{"n e w er \\_"}$, $\text{"w i d er \\_"}$
 
 **Continuing iterations**:
 - Next merging $\text{"l o"}$ into $\text{"lo"}$
