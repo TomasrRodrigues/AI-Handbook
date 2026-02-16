@@ -446,9 +446,9 @@ At this starting point, every word is represented as a sequence of character tok
 4. Replace all occurrences of that pair in the corpus with the new merged token
 5. Repeat until the vocabulary reaches the desired size
 
-Let's walk through this process with a concrete example. Imagine we're training a BPE tokenizer on a tiny corpus containing the words $\text{"low"}$, $\text{"lower"}$, $\text{"lowest"}$, $\text{"newer"}$, $\text{"wider"}$, each appearing with some frequency. We represent each word with its character plus an end-of-word marker, which I'll write as $\text{"}_\text{"}$ for clarity: 
+Let's walk through this process with a concrete example. Imagine we're training a BPE tokenizer on a tiny corpus containing the words $\text{"low"}$, $\text{"lower"}$, $\text{"lowest"}$, $\text{"newer"}$, $\text{"wider"}$, each appearing with some frequency. We represent each word with its character plus an end-of-word marker, which I'll write as $\text{"}\_\text{"}$ for clarity: 
 
-**Initial corpus**: $\text{"low}_\text{"}$, $\text{"lower}_\text{"}$, $\text{"lowest}_\text{"}$, $\text{"newer}_\text{"}$, $\text{"wider}_\text{"}$
+**Initial corpus**: $\text{"low}\_\text{"}$, $\text{"lower}\_\text{"}$, $\text{"lowest}\_\text{"}$, $\text{"newer}\_\text{"}$, $\text{"wider}\_\text{"}$
 
 **Iteration 1**: Count adjacent token pairs
 - Pair $\text{"e r"}$ appears in $\text{"lower"}$, $\text{"newer"}$, and $\text{"wider"}$
@@ -456,15 +456,15 @@ Let's walk through this process with a concrete example. Imagine we're training 
 - Let's say $\text{"e r"}$ is most frequent
 
 We merge $\text{"e r"}$ into a new token $\text{"er"}$ and update our corpus:
-- $\text{"lower"}$ becomes $\text{"l o w er }_\text{"}$
-- $\text{"newer"}$ becomes $\text{"n e w er }_\text{"}$
-- $\text{"wider"}$ becomes $\text{"w i d er }_\text{"}$
+- $\text{"lower"}$ becomes $\text{"l o w er }\_\text{"}$
+- $\text{"newer"}$ becomes $\text{"n e w er }\_\text{"}$
+- $\text{"wider"}$ becomes $\text{"w i d er }\_\text{"}$
 
 **Iteration 2**: Find the next most frequent pair
-- Perhaps $\text{"er}_\text{"}$ (the $\text{"er"}$ token followed by the end-of-word marker) is now most frequent
-- We merge this into $\text{"er}_\text{"}$, representing the common suffix
+- Perhaps $\text{"er}\_\text{"}$ (the $\text{"er"}$ token followed by the end-of-word marker) is now most frequent
+- We merge this into $\text{"er}\_\text{"}$, representing the common suffix
 
-Our words become: $\text{"l o w er }_\text{"}$, $\text{"n e w er }_\text{"}$, $\text{"w i d er }_\text{"}$
+Our words become: $\text{"l o w er }\_\text{"}$, $\text{"n e w er }\_\text{"}$, $\text{"w i d er }\_\text{"}$
 
 **Continuing iterations**:
 - Next merging $\text{"l o"}$ into $\text{"lo"}$
@@ -520,11 +520,11 @@ The intuition behind WordPiece's criterion is that we want to create tokens that
 
 In practice, BPE and WordPiece often produce similar vocabularies, but the likelihood-based criterion can lead to better tokenizations in some cases.
 
-WordPiece also uses a **special convention** where subword tokens that don't begin a word are marked with a prefix, typically $\text{"\#\#"}$. So the word $\text{"unhappiness"}$ might be tokenized as 
-- $\text{"un"}$, $\text{"}##\text{happiness"}$ or 
-- $\text{"un"}$, $\text{"}##\text{happy"}$, $\text{"}##\text{ness"}$
+WordPiece also uses a **special convention** where subword tokens that don't begin a word are marked with a prefix, typically $\#\#$. So the word $\text{"unhappiness"}$ might be tokenized as 
+- $\text{"un"}$, $\text{"}\#\#\text{happiness"}$ or 
+- $\text{"un"}$, $\text{"}\#\#\text{happy"}$, $\text{"}\#\#\text{ness"}$
 
-The $\text{"}##\text{"}$ markers make it immediately clear which tokens are word beginnings and which are continuations. This can be useful for downstream tasks where we need to know word boundaries, such as **named entity recognition** where we need to identify which tokens are part of the same entity.
+The $\text{"}\#\#\text{"}$ markers make it immediately clear which tokens are word beginnings and which are continuations. This can be useful for downstream tasks where we need to know word boundaries, such as **named entity recognition** where we need to identify which tokens are part of the same entity.
 
 Another approach is the **Unigram language model tokenization algorithm**, which takes a fundamentally different strategy - Instead of starting with characters and building up by merging:
 1. **Starts large**: Begins with a large vocabulary of possible subwords that appear in the corpus with sufficient frequency, creating a very large initial vocabulary
