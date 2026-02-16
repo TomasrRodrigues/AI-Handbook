@@ -521,10 +521,10 @@ The intuition behind WordPiece's criterion is that we want to create tokens that
 In practice, BPE and WordPiece often produce similar vocabularies, but the likelihood-based criterion can lead to better tokenizations in some cases.
 
 WordPiece also uses a **special convention** where subword tokens that don't begin a word are marked with a prefix, typically $$\\#\\#$$. So the word $\text{"unhappiness"}$ might be tokenized as 
-- $\text{"un"}$, $\text{"}\#\#\text{happiness"}$ or 
-- $\text{"un"}$, $\text{"}\#\#\text{happy"}$, $\text{"}\#\#\text{ness"}$
+- $\text{"un"}$, $$\text{"\\#\\#happiness"}$$ or 
+- $\text{"un"}$, $$\text{"\\#\\#happy"}$$, $$\text{"\\#\\#ness"}$$
 
-The $\text{"}\#\#\text{"}$ markers make it immediately clear which tokens are word beginnings and which are continuations. This can be useful for downstream tasks where we need to know word boundaries, such as **named entity recognition** where we need to identify which tokens are part of the same entity.
+The $$\\#\\#$$ markers make it immediately clear which tokens are word beginnings and which are continuations. This can be useful for downstream tasks where we need to know word boundaries, such as **named entity recognition** where we need to identify which tokens are part of the same entity.
 
 Another approach is the **Unigram language model tokenization algorithm**, which takes a fundamentally different strategy - Instead of starting with characters and building up by merging:
 1. **Starts large**: Begins with a large vocabulary of possible subwords that appear in the corpus with sufficient frequency, creating a very large initial vocabulary
