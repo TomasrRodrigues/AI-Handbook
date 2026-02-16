@@ -520,7 +520,7 @@ The intuition behind WordPiece's criterion is that we want to create tokens that
 
 In practice, BPE and WordPiece often produce similar vocabularies, but the likelihood-based criterion can lead to better tokenizations in some cases.
 
-WordPiece also uses a **special convention** where subword tokens that don't begin a word are marked with a prefix, typically $\#\#$. So the word $\text{"unhappiness"}$ might be tokenized as 
+WordPiece also uses a **special convention** where subword tokens that don't begin a word are marked with a prefix, typically $$\\#\\#$$. So the word $\text{"unhappiness"}$ might be tokenized as 
 - $\text{"un"}$, $\text{"}\#\#\text{happiness"}$ or 
 - $\text{"un"}$, $\text{"}\#\#\text{happy"}$, $\text{"}\#\#\text{ness"}$
 
