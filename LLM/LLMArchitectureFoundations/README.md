@@ -926,5 +926,91 @@ The transformer architecture has become a **general-purpose tool for processing 
 ---
 ## Sampling Techniques
 
+When we interact with a large language model, requesting it to write a story, answer a question, or generate code, what we see as output is the result of **thousands of individual decisions**. At each step of generation, the model doesn't simply produce a word - it produces a **probability distribution over its entire vocabulary**, assigning a likelihood to each of the tens of thousands of tokens it knows. 
+
+The question of how to select from this distribution of possibilities, how to navigate the trade-off between predictability and creativity, between safety and surprise, is what **sampling techniques** address. This choice profoundly shapes every aspect of the generated text, from its coherence and accuracy to its creativity and diversity.
+
+### Understanding the Probability Distribution
+
+To understand sampling, we must first understand what the model actually produces at each generation step. 
+
+After processing all the input through its many layers of transformers and attention mechanisms, the model's final layer outputs what are called **logits** - raw numerical scores for every token in its vocabulary. These aren't probabilities yet; they're unbounded real numbers that can be positive or negative, small or large. A common vocabulary might contain 50.000 tokens, so the model outputs 50.000 logits, one for each possible next token.
+
+To convert these logits into probabilities, the model applies the **softmax function**, which we encountered earlier in the context of attention mechanisms. Softmax takes any collection of numbers and transforms them into a valid probability distribution - positive values that sum to one. It does this by:
+1. Exponentiating each logit (raising $e$ to the power of the logit)
+2. Dividing by the sum of all exponentiated values
+
+The exponential function means that even small differences in logits can lead to large differences in probabilities, and large differences in logits lead to enormous differences in probabilities.
+
+Consider a concrete example. The model has just generated $\text{"The cat sat on the"}$ and must predict the next word. 
+The logits might be something like 
+- $\text{"mat: "}8.2$
+- $\text{"floor: "}7.9$
+- $\text{"chair: "}7.5$
+- $\text{"table: "}6.8$
+- $\text{"roof: "}4.2$
+- $\text{"computer: "}1.1$
+- $\text{"quantum: "}-3.1$
+- ... and so on for all 50.000 tokens. 
+
+**After applying softmax, these convert to probabilities**:
+- $\text{"mat: "}0.31$ (31% chance)
+- $\text{"floor: "}0.25$ (25% chance)
+- $\text{"chair: "}0.18$ (18% chance)
+- $\text{"table: "}0.10$ (10% chance)
+- $\text{"roof: "}0.02$ (2% chance)
+- $\text{"computer: "}0.001$ (0.1% chance)
+- $\text{"quantum: "}0.0001$ (0.01% chance)
+- ...with the remaining tiny bits of probability spread across tens of thousands of other words
+
+This probability distribution reveals something fundamental about language: **even given perfect context, there are often many plausible continuations**. The model isn't certain that "mat" is the next word - it's the most likely, but "floor" and "chair" are also quite reasonable.
+
+This inherent uncertainty is a **feature of language itself**, not a limitation of our models. Different authors might complete the sentence differently, and all could be correct. The challenge is deciding how to select from this distribution in a way that produces high-quality, useful text for the task at hand.
+
+### Greedy Decoding
+
+The most straightforward way to select the next token is **greedy decoding**: always pick the token with the highest probability. Given our esample, greedy decoding would select $\text{"mat"}$. Then, with $\text{"The cat sat on the mat"}$ as context, we generate probabilities for the next word and again pick the highest probability token. Perhaps that's a period, giving us $\text{"The cat sat on the mat"}$ as our complete generation.
+
+Greedy decoding has several obvious advantages:
+- **Deterministic**: Given the same input, the model always produces the same output, which can be valuable for reproducibility and consistency
+- **Computationally efficient**: Requires no random sampling or complex decision-making
+- **Works well for factual tasks**: For many applications where there's a clear correct answer, greedy decoding works perfectly well 
+
+For example, if the model is answering a factual question like $\text{"What is the capital of France?"}$, greedy decoding will reliably produce $\text{"Paris"}$ if that's the highest probability token.
+
+However, greedy decoding has severe limitations that become apparent in tasks requiring longer or more creative outputs. 
+
+**The local vs. global optimality problem**: By always choosing the locally optimal next token, it can lead to globally suboptimal sequences. The issue is that the highest probability next token right now might lead the model down a path where the only continuations are awkward or incorrect.
+
+**Repetitive loops**: Greedy decoding can get "stuck" in repetitive loops, particularly in longer generations:
+- Text that repeats the same phrase over and over
+- Text that becomes increasingly redundant and boring
+- The model essentially gets trapped in a pattern where each next step is locally optimal but the overall sequence is poor
+
+**Poor creative output**: For creative tasks like story writing, greedy decoding produces especially unsatisfying results:
+- The highest probability continuation is often generic and predictable
+- Stories tend to be bland, using only common words and familiar phrases
+- Never takes the creative risks that make fiction engaging
+- The text is grammatically correct and factually plausible but entirely lacking in surprise or originality
+
+This is why virtually all practical language model applications use more sophisticated sampling methods.
+
+### Temperature
+
+Temperature is perhaps the single most important parameter for controlling the character of generated text. It doesn't change which token has the highest probability, but it dramatically changes the shape of the probability distribution before we sample from it. Temperature is applied by dividing all the logits by the temperature value before applying softmax. This simple scaling has profound effects.
+
+At low temperature - say 0.2 or 0.5 - we divide the logits by a number less than one, which is equivalent to muiltiplying them, making the differences between logits larger. When these larger differences go through the softmax exponential function, the result is a sharper, more peaked distribution. The high-probability tokens become even more likely and the low-probability tokens become even less likely. At temperature approaching zero, the distribution becomes so peaked that it's essentially deterministic, like greedy decoding. The model becomes very confident and conservative, almost always picking the highest probability token.
+
+At high temperature - say 1.5 or 2.0 - we divide logits by a number greater than one, making the differences between logits smaller. The resulting softmax distribution is flatter, more spread out. Tokens that originally had low probability see their probabilities increase, while high-probability tokens see their probabilities decrease. The model becomes less certain, more willing to explore less probable options. At extremely high temperatures, the distribution becomes nearly uniform, approaching random selection from the vocabulary.
+
+Let's see this concretely with our $\text{"The cat sat on the"}$ example. At temperature 0.5, $\text{"mat"}$ might go from probability 0.31 to 0.55, while $\text{"floor"}$ drops to 0.20 and $\text{"chair"}$ to 0.10. The model has become more confident that $\text{"mat"}$ is correct. at temperature 1.5, $\text{"mat"}$ might drop to 0.22, $\text{"floor"}$ increases to 0.20, $\text{"chair"}$ to 0.17, and even less likely options like $\text{"roof"}$ increase to 0.08. The model is now much more willing to explore alternatives.
+
+The practical implications are enormous. For tasks requiring factual accuracy - answering questions, extracting information, summarizing technical documents - low temperature around 0.2 to 0.4 is typically best. The model sticks close to its highest confidence predictions, minimizing the chance of generating incorrect information. For creative writing, higher temperature around 0.8 to 1.0 produces more interesting and varied text. The model takes chances, uses less common words, constructs unexpected phrases. For programming, very low temperature around 0.2 is usually appropriate because even small errors in code can be catastrophic - a single misplaced bracket breaks everything.
+
+One crucial insight is that temperature interacts with model quality. A well-trained model with accurate probability estimates can be used effectively at higher temperatures because even its lower-probability choices are reasonable. A poorly trained model might assign inappropriate probabilities and high temperature would amplify these errors, leading to nonsense. This is why larger, better-trained models often perform better at creative tasks - they can safely operate at temperatures that would break smaller models.
+
+### Top-K Sampling
+
+
 
 ---
