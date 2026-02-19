@@ -997,17 +997,42 @@ This is why virtually all practical language model applications use more sophist
 
 ### Temperature
 
-Temperature is perhaps the single most important parameter for controlling the character of generated text. It doesn't change which token has the highest probability, but it dramatically changes the shape of the probability distribution before we sample from it. Temperature is applied by dividing all the logits by the temperature value before applying softmax. This simple scaling has profound effects.
+Temperature is perhaps the single most important parameter for controlling the character of generated text. It doesn't change which token has the highest probability, but it dramatically changes the shape of the probability distribution before we sample from it. 
 
-At low temperature - say 0.2 or 0.5 - we divide the logits by a number less than one, which is equivalent to muiltiplying them, making the differences between logits larger. When these larger differences go through the softmax exponential function, the result is a sharper, more peaked distribution. The high-probability tokens become even more likely and the low-probability tokens become even less likely. At temperature approaching zero, the distribution becomes so peaked that it's essentially deterministic, like greedy decoding. The model becomes very confident and conservative, almost always picking the highest probability token.
+Temperature is applied by dividing all the logits by the temperature value before applying softmax. This simple scaling has profound effects.
 
-At high temperature - say 1.5 or 2.0 - we divide logits by a number greater than one, making the differences between logits smaller. The resulting softmax distribution is flatter, more spread out. Tokens that originally had low probability see their probabilities increase, while high-probability tokens see their probabilities decrease. The model becomes less certain, more willing to explore less probable options. At extremely high temperatures, the distribution becomes nearly uniform, approaching random selection from the vocabulary.
+At low temperature, we divide the logits by a number less than one, which is equivalent to multiplying them, making the differences between logits larger. When these larger differences go through the softmax exponential function, the result is a **sharper, more peaked distribution**:
+- High-probability tokens become even more likely
+- Low-probability tokens become even less likely
+- At temperature approaching zero, the distribution becomes so peaked that it's essentially deterministic, like greedy decoding
+- The model becomes very confident and conservative, almost always picking the highest probability token
 
-Let's see this concretely with our $\text{"The cat sat on the"}$ example. At temperature 0.5, $\text{"mat"}$ might go from probability 0.31 to 0.55, while $\text{"floor"}$ drops to 0.20 and $\text{"chair"}$ to 0.10. The model has become more confident that $\text{"mat"}$ is correct. at temperature 1.5, $\text{"mat"}$ might drop to 0.22, $\text{"floor"}$ increases to 0.20, $\text{"chair"}$ to 0.17, and even less likely options like $\text{"roof"}$ increase to 0.08. The model is now much more willing to explore alternatives.
+At high temperature, we divide logits by a number greater than one, making the differences between logits smaller. The resulting softmax distribution is **flatter, more spread out**:
+- Tokens that originally had low probability see their probabilities increase
+- High-probability tokens see their probabilities decrease
+- The model becomes less certain, more willing to explore less probable options
+- At extremely high temperatures, the distribution becomes nearly uniform, approaching random selection from the vocabulary
+
+Let's see this with our $\text{"The cat sat on the"}$ example. 
+
+**At temperature 0.5** (conservative):
+- "mat": 0.31 → 0.55
+- "floor": 0.25 → 0.20
+- "chair": 0.18 → 0.10
+
+The model has become more confident that "mat" is correct.
+
+**At temperature 1.5** (exploratory):
+- "mat": 0.31 → 0.22
+- "floor": 0.25 → 0.20
+- "chair": 0.18 → 0.17
+- "roof": 0.02 → 0.08
+
+The model is now much more willing to explore alternatives.
 
 The practical implications are enormous. For tasks requiring factual accuracy - answering questions, extracting information, summarizing technical documents - low temperature around 0.2 to 0.4 is typically best. The model sticks close to its highest confidence predictions, minimizing the chance of generating incorrect information. For creative writing, higher temperature around 0.8 to 1.0 produces more interesting and varied text. The model takes chances, uses less common words, constructs unexpected phrases. For programming, very low temperature around 0.2 is usually appropriate because even small errors in code can be catastrophic - a single misplaced bracket breaks everything.
 
-One crucial insight is that temperature interacts with model quality. A well-trained model with accurate probability estimates can be used effectively at higher temperatures because even its lower-probability choices are reasonable. A poorly trained model might assign inappropriate probabilities and high temperature would amplify these errors, leading to nonsense. This is why larger, better-trained models often perform better at creative tasks - they can safely operate at temperatures that would break smaller models.
+One crucial insight is that **temperature interacts with model quality**. A well-trained model with accurate probability estimates can be used effectively at higher temperatures because even its lower-probability choices are reasonable. A poorly trained model might assign inappropriate probabilities and high temperature would amplify these errors, leading to nonsense. This is why larger, better-trained models often perform better at creative tasks - they can safely operate at temperatures that would break smaller models.
 
 ### Top-K Sampling
 
