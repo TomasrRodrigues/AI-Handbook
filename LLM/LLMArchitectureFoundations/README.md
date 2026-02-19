@@ -1036,65 +1036,145 @@ One crucial insight is that **temperature interacts with model quality**. A well
 
 ### Top-K Sampling
 
-While temperature adjusts how we weight probabilities, it doesn't change which tokens are considered. Even at low temperature, there's a nonzero probability of selecting extremely unlikely tokens like $\text{"quantum"}$ after $\text{"The cat sat on the"}$. Top-k sampling addresses this by imposing a hard cutoff: only consider the k most probable tokens and ignore everything else.
+While temperature adjusts how we weight probabilities, it doesn't change which tokens are considered. Even at low temperature, there's a nonzero probability of selecting extremely unlikely tokens like $\text{"quantum"}$ after $\text{"The cat sat on the"}$. Top-k sampling addresses this by imposing a **hard cutoff**: only consider the k most probable tokens and ignore everything else.
 
-The algorithm is straightforward. We look at the probability distribution and identify the k tokens with highest probabilities. We set the probabilities of all other tokens to zero. Then we renormalize the remaining probabilities so they sum to one and sample from this restricted distribution. The parameter k typically ranges from 10 to 100, though it can be tuned for specific applications.
+**How it works**: 
+1. Look at the probability distribution and identify the $k$ tokens with highest probabilities
+2. Set the probabilities of all other tokens to zero
+3. Renormalize the remaining probabilities so they sum to one
+4. Sample from this restricted distribution
 
-With k equals 10 for our example, we might keep $\text{"mat"}$, $\text{"floor"}$, $\text{"chair"}$, $\text{"table"}$, $\text{"roof"}$, $\text{"carpet"}$, $\text{"ground"}$, $\text{"bed"}$, $\text{"couch"}$ and $\text{"wall"}$. We eliminate $\text{"computer"}$, $\text{"quantum"}$ and 49,980 other tokens. The probabilities of the ten kept tokens are rescaled to sum to one, and we sample from this smaller set. This guarantees that we never select completely implausible tokens while still allowing some variety in generation. 
+The parameter $k$ typically ranges from 10 to 100, though it can be tuned for specific applications.
 
-The value of k creates a clear trade-off. Small k, say 5 or 10, keeps generation focused on the most probable options, leading to safe, predictable text. Large k, say 50 or 100, allows more exploration and creativity but includes tokens that might be inappropriate or nonsensical. Setting k to 1 is equivalent to greedy decoding - we always pick single mosst likely token. Setting k to the full vocabulary size is equivalent to sampling without any top-k restriction.
+For example, with $k=10$ for our example, we might keep $\text{"mat"}$, $\text{"floor"}$, $\text{"chair"}$, $\text{"table"}$, $\text{"roof"}$, $\text{"carpet"}$, $\text{"ground"}$, $\text{"bed"}$, $\text{"couch"}$ and $\text{"wall"}$. We eliminate $\text{"computer"}$, $\text{"quantum"}$ and 49,980 other tokens. The probabilities of the ten kept tokens are rescaled to sum to one, and we sample from this smaller set. This guarantees that we never select completely implausible tokens while still allowing some variety in generation. 
 
-One significant limitation of top-k sampling is that k is fixed regardless of the model's confidence. Sometimes the model is very certain about what comes next. After "To be or not to," the next token is almost certainly "be." In such cases, restricting to the top 10 tokens is unnecessary; even the top 3 would suffice. Other times the model is quite uncertain, perhaps at the beginning of a creative story where many different openings are equally plausible. In these cases, restricting to only 10 tokens might exclude many reasonable possibilities. This inflexibility motivated the development of top-p sampling, which adapts to the model's confidence level.
+The value of $k$ creates a clear trade-off:
+- **Small $k$** (5-10): Keeps generation focused on the most probable options, leading to safe, predictable text
+- **Large $k$** (50-100): Allows more exploration and creativity but includes tokens that might be inappropriate or nonsensical
+- **$k = 1$**: Equivalent to greedy decoding - we always pick the single most likely token
+- **$k =$ vocabulary size**: Equivalent to sampling without any top-k restriction
+
+One significant limitation of top-k sampling is that $k$ is fixed regardless of the model's confidence:
+- **When the model is very certain**: After "To be or not to," the next token is almost certainly "be." In such cases, restricting to the top 10 tokens is unnecessary; even the top 3 would suffice.
+- **When the model is uncertain**: At the beginning of a creative story, many different openings are equally plausible. Restricting to only 10 tokens might exclude many reasonable possibilities.
+
+This inflexibility motivated the development of top-p sampling, which adapts to the model's confidence level.
 
 ### Top-P (Nucleus)
 
-Top-p sampling, also known as nucleus sampling after the paper that introduced it in 2019, addresses the inflexibility of top-k by using a cumulative probability threshold rather than a fixed number of tokens. Instead of always keeping exactly k tokens, we keep however many tokens are needed to reach a cumulative probability of p. 
+Top-p sampling, also known as **nucleus sampling** after the paper that introduced it in 2019, addresses the inflexibility of top-k by using a **cumulative probability threshold** rather than a fixed number of tokens. Instead of always keeping exactly $k$ tokens, we keep however many tokens are needed to reach a cumulative probability of $p$. 
 
-The algorithm works as follows. We sort all tokens by their probability in descending order. We start with the most probable token and keep adding tokens to our sampling pool, tracking the cumulative probability, until we reach or exceed p. All these tokens are kept, and everything else is excluded. We renormalize the kept tokens' probabilities to sum to one and sample from this set.
+The algorithm works as follows:
+1. Sort all tokens by their probability in descending order
+2. Start with the most probable token and keep adding tokens to our sampling pool, tracking the cumulative probability, until we reach or exceed $p$
+3. All these tokens are kept, and everything else is excluded
+4. Renormalize the kept tokens' probabilities to sum to one and sample from this set
 
-With p equals 0.9 for our example, we would start with $\text{"mat"}$ at probability 0.31, add $\text{"floor"}$ bringing cumulative probability to 0.56, add $\text{"chair"}$ for 0.74, add $\text{"table"}$ for 0.84, and add $\text{"roof"}$ for 0.86. We're not quite at 0.9, so we continue adding tokens until the cumulative probability exceeds 0.9. We might end up with six or seven tokens total. The key insight is that this number varies depending on the probability distribution's shape.
+For example, with $p=0.9$ for our example, we would start:
+- Start with "mat" at probability 0.31
+- Add "floor" bringing cumulative probability to 0.56
+- Add "chair" for 0.74
+- Add "table" for 0.84
+- Add "roof" for 0.86
+- Continue adding tokens until the cumulative probability exceeds 0.9
 
-When the model is very confident, as in "To be or not to," the token "be" might have probability 0.95. With p equals 0.9, we would include only "be" because it alone exceeds the threshold. The sampling pool automatically becomes small when the model is certain. When the model is uncertain, as at the beginning of a story, probabilities might be spread across many tokens. To reach cumulative probability 0.9, we might need to include 30 or 40 tokens. The sampling pool automatically becomes larger when the model is uncertain.
+We might end up with six or seven tokens total. The key insight is that **this number varies depending on the probability distribution's shape**.
 
-This adaptive behavior is top-p's greatest strength. The model gets to be conservative when it's confident and exploratory when it's not, which aligns with our intuitions about how uncertainty should affect generation. In practice, top-p has proven remarkably effective, becoming one of the most popular sampling methods. Typical values range from 0.9 to 0.95, with higher values allowing more diversity and lower values producing more focused outputs.
+**Adaptive behavior based on model confidence**:
 
-Top-p is often combined with top-k as a "belt and suspenders" approach. You might specify both k equals 50 and p equals 0.9, meaning the model first restricts to the top 50 tokens and then further restricts to tokens needed to reach cumulative probability 0.9. This provides both an absolute safety bound (never consider more than 50 tokens, no matter how flat the distribution) and an adaptive bound that respects the model's confidence level.
+**When the model is very confident** (e.g., "To be or not to"):
+- The token "be" might have probability 0.95
+- With $p = 0.9$, we would include only "be" because it alone exceeds the threshold
+- The sampling pool automatically becomes small when the model is certain
+
+**When the model is uncertain** (e.g., at the beginning of a story):
+- Probabilities might be spread across many tokens
+- To reach cumulative probability 0.9, we might need to include 30 or 40 tokens
+- The sampling pool automatically becomes larger when the model is uncertain
+
+This adaptive behavior is top-p's greatest strength. The model gets to be conservative when it's confident and exploratory when it's not, which aligns with our intuitions about how uncertainty should affect generation. In practice, top-p has proven remarkably effective, becoming one of the most popular sampling methods. Typical values range from **0.9 to 0.95**, with higher values allowing more diversity and lower values producing more focused outputs.
+
+Top-p is often combined with top-k as a "belt and suspenders" approach. You might specify both $k = 50$ and $p = 0.9$, meaning the model first restricts to the top 50 tokens and then further restricts to tokens needed to reach cumulative probability 0.9. This provides both an **absolute safety bound** (never consider more than 50 tokens, no matter how flat the distribution) and an **adaptive bound** that respects the model's confidence level.
 
 ### Beam Search
 
-All the sampling methods we've discussed so far make decisions one token at a time. We generate probabilities for the next token, apply temperature and top-k or top-p filtering, sample a token and move on. The choice at step t is made without considering how it will affect options at steps t plus one, t plus two and beyond. This myopic approach sometimes leads to suboptimal sequences where a locally good choice creates globally poor outcomes.
+All the sampling methods we've discussed so far make decisions one token at a time. We generate probabilities for the next token, apply temperature and top-k or top-p filtering, sample a token and move on. The choice at step $t$ is made without considering how it will affect options at steps $t+1$, $t+2$ and beyond. This myopic approach sometimes leads to suboptimal sequences where a locally good choice creates globally poor outcomes.
 
-Beam search addresses this by maintaining multiple candidate sequences simultaneously and selecting based on overall likelihood rather than greedy local decisions. Instead of tracking one partial generation, beam search tracks b sequences, where b is the beam width. At each step, it expands each sequence by considering all possible next tokens, evaluates the likelihood of all resulting sequences and keeps only the b most likely overall.
+Beam search addresses this by maintaining multiple candidate sequences simultaneously and selecting based on overall likelihood rather than greedy local decisions. Instead of tracking one partial generation, beam search tracks $b$ sequences, where $b$ is the beam width. At each step, it expands each sequence by considering all possible next tokens, evaluates the likelihood of all resulting sequences and keeps only the $b$ most likely overall.
 
+The likelihood of a sequence is computed as the product of the probabilities of each token, or equivalently and more practically, as the sum of log probabilities to avoid numerical underflow. 
 
-The likelihood of a sequence is computed as the product of the probabilities of each token, or equivalently and more practically, as the sum of log probabilities to avoid numerical underflow. A sequence "The cat sat on the mat" might have log probability minus 2.3 plus minus 1.8 plus minus 0.9 plus minus 1.2 plus minus 0.7 plus minus 1.5 equals minus 8.4. Another sequence "The cat perched on the windowsill" might have log probability minus 8.9. The first sequence has higher likelihood overall even though individual tokens in the second sequence might have been more probable in isolation.
+For example:
+- Sequence "The cat sat on the mat" might have log probability: $-2.3 + (-1.8) + (-0.9) + (-1.2) + (-0.7) + (-1.5) = -8.4$
+- Another sequence "The cat perched on the windowsill" might have log probability $-8.9$
+- The first sequence has higher likelihood overall even though individual tokens in the second sequence might have been more probable in isolation
 
-Beam search is particularly effective for tasks where there's a clear correct answer that we want to find by exploring multiple paths. Machine translation is the classic application. Given a sentence in French, there's typically one best translation to English, and beam search helps find it by considering multiple translation candidates and selecting the one with highest overall probability. This prevents the model from committing to an early word choice that makes good later translations impossible.
+Beam search is particularly effective for tasks where there's a clear correct answer that we want to find by exploring multiple paths. **Machine translation** is the classic application. Given a sentence in French, there's typically one best translation to English, and beam search helps find it by considering multiple translation candidates and selecting the one with highest overall probability. This prevents the model from committing to an early word choice that makes good later translations impossible.
 
-However, beam search has important limitations for open-ended generation. It's computationally expensive, effectively multiplying the cost of generation by the beam width. It can't be easily used for streaming generation where tokens are displayed as they're produced, since you don't know which beam was best until generation completes. Most importantly, beam search optimizes for high likelihood, but high likelihood doesn't always mean high quality for creative tasks.
+However, beam search has important limitations for open-ended generation:
+- **Computationally expensive**: Effectively multiplying the cost of generation by the beam width
+- **No streaming**: Can't be easily used for streaming generation where tokens are displayed as they're produced, since you don't know which beam was best until generation completes
+- **Optimizes for likelihood, not quality**: Most importantly, beam search optimizes for high likelihood, but high likelihood doesn't always mean high quality for creative tasks
 
-The problem is that the most probable text according to the model is often generic and boring. "The cat sat on the mat" might have higher probability than "The cat perched precariously on the windowsill," but the second is more interesting and specific. For creative writing, conversation, or storytelling, sampling methods that inject randomness often produce better results than beam search, even though the sampled outputs have lower likelihood. Understanding when to use beam search versus sampling methods is crucial for effective deployment.
+The most probable text according to the model is often generic and boring. "The cat sat on the mat" might have higher probability than "The cat perched precariously on the windowsill," but the second is more interesting and specific. For creative writing, conversation, or storytelling, sampling methods that inject randomness often produce better results than beam search, even though the sampled outputs have lower likelihood. Understanding when to use beam search versus sampling methods is crucial for effective deployment.
 
 ### Practical Configuration
 
+In practice, generating high-quality text requires skillfully combining multiple sampling techniques and understanding how their parameters interact. The ideal configuration varies dramatically depending on the task, the model, and the desired output characteristics. 
 
-In practice, generating high-quality text requires skillfully combining multiple sampling techniques and understanding how their parameters interact. The ideal configuration varies dramatically depending on the task, the model, and the desired output characteristics. Let's explore how to configure sampling for different real-world applications.
+Let's explore how to configure sampling for different real-world applications:
 
-For factual question answering where accuracy is paramount, a typical configuration might be temperature 0.2, top-p 0.9, with no beam search because streaming responsiveness is more important than finding the globally optimal answer. The very low temperature keeps the model focused on high-probability, likely-to-be-correct tokens. The top-p provides a safety mechanism, excluding the long tail of improbable tokens while adapting to the model's confidence. This configuration produces consistent, accurate responses without being completely mechanical.
+**Factual question answering** (accuracy is paramount):
+- **Temperature**: 0.2
+- **Top-p**: 0.9
+- **Beam search**: No (streaming responsiveness is more important)
+- **Why it works**: The very low temperature keeps the model focused on high-probability, likely-to-be-correct tokens. The top-p provides a safety mechanism, excluding the long tail of improbable tokens while adapting to the model's confidence. This configuration produces consistent, accurate responses without being completely mechanical.
 
-For creative writing, you want variation and surprise, so you might use temperature 0.8 or even 0.9, top-p 0.95, potentially with a frequency penalty to discourage repetition. The higher temperature encourages the model to explore less probable word choices, leading to more interesting and varied prose. The higher top-p allows consideration of a wider vocabulary, letting the model use less common words that might be more evocative. Frequency penalty helps prevent the model from falling into repetitive patterns that can make creative writing feel stilted.
+**Creative writing** (variation and surprise):
+- **Temperature**: 0.8-0.9
+- **Top-p**: 0.95
+- **Additional**: Frequency penalty to discourage repetition
+- **Why it works**: The higher temperature encourages the model to explore less probable word choices, leading to more interesting and varied prose. The higher top-p allows consideration of a wider vocabulary, letting the model use less common words that might be more evocative. Frequency penalty helps prevent the model from falling into repetitive patterns that can make creative writing feel stilted.
 
-For code generation, where syntactic correctness is essential, you typically use very low temperature around 0.2, top-p 0.95, and perhaps top-k 40 as an additional safety bound. Code has strict grammatical rules - a missing bracket or incorrect indentation breaks everything - so you want the model to stick very close to high-probability, syntactically valid completions. Even small amounts of randomness can introduce bugs that make generated code unusable. The low temperature configuration minimizes this risk while still allowing some flexibility.
+**Code generation** (syntactic correctness is essential):
+- **Temperature**: 0.2
+- **Top-p**: 0.95
+- **Top-k**: 40 (additional safety bound)
+- **Why it works**: Code has strict grammatical rules - a missing bracket or incorrect indentation breaks everything - so you want the model to stick very close to high-probability, syntactically valid completions. Even small amounts of randomness can introduce bugs that make generated code unusable. The low temperature configuration minimizes this risk while still allowing some flexibility.
 
-For dialogue systems and chatbots, the ideal configuration depends heavily on the application's personality and goals. A customer service bot should use low temperature around 0.3 for consistency and reliability. Users expect accurate, helpful responses, not creative interpretation. A companion chatbot designed to be entertaining might use higher temperature around 0.7 or 0.8 with broader top-p to produce more varied and engaging conversation. A therapeutic chatbot should probably use moderate temperature around 0.5 - supportive and coherent without being completely predictable.
+**Dialogue systems and chatbots** (depends on personality and goals):
+- **Customer service bot**: Temperature 0.3 (consistency and reliability - users expect accurate, helpful responses, not creative interpretation)
+- **Companion chatbot**: Temperature 0.7-0.8 with broader top-p (more varied and engaging conversation)
+- **Therapeutic chatbot**: Temperature 0.5 (supportive and coherent without being completely predictable)
 
-Advanced practitioners sometimes adjust temperature dynamically during generation. You might start with lower temperature to establish a coherent direction, then increase temperature as generation continues to add variation and prevent monotony. For code generation, you might use lower temperature for function signatures and control structures where correctness is critical, then slightly higher temperature for comments or variable names where more flexibility is acceptable. This dynamic adjustment allows the model to be conservative when precision matters and creative when variation is desirable.
+Some advanced Techniques include:
 
-Another important consideration is how sampling parameters interact with model scale. Larger models with more parameters generally produce better-calibrated probability distributions - their confidence estimates more accurately reflect true likelihoods. This means larger models can be used effectively with higher temperatures without degrading into nonsense as quickly as smaller models. A 175 billion parameter model might produce coherent text at temperature 1.0, while a 1 billion parameter model might need temperature 0.6 to maintain similar coherence. Understanding your specific model's capabilities is essential for setting appropriate parameters.
+**Dynamic temperature adjustment**: Advanced practitioners sometimes adjust temperature dynamically during generation:
+- Start with lower temperature to establish a coherent direction
+- Increase temperature as generation continues to add variation and prevent monotony
+- For code: Use lower temperature for function signatures and control structures where correctness is critical, then slightly higher temperature for comments or variable names where more flexibility is acceptable
+- This allows the model to be conservative when precision matters and creative when variation is desirable
 
-The field continues to evolve with new sampling techniques. Researchers have explored contrastive decoding, which explicitly avoids patterns seen in undesirable outputs. Classifier-guided generation uses an auxiliary model to steer generation toward desired attributes like sentiment or topic. Mirostat dynamically adjusts parameters to maintain a target level of randomness throughout generation. As our understanding deepens, we continue developing more sophisticated ways to extract high-quality outputs from these powerful but complex systems.
+**Model scale considerations**: Another important consideration is how sampling parameters interact with model scale:
+- **Larger models** (e.g., 175B parameters) generally produce better-calibrated probability distributions - their confidence estimates more accurately reflect true likelihoods
+- Can be used effectively with higher temperatures without degrading into nonsense as quickly as smaller models
+- Might produce coherent text at temperature 1.0
+- **Smaller models** (e.g., 1B parameters) might need temperature 0.6 to maintain similar coherence
+- Understanding your specific model's capabilities is essential for setting appropriate parameters
 
-The fundamental insight underlying all sampling techniques is that language generation is inherently probabilistic with genuine uncertainty. Different sampling strategies represent different philosophies about navigating this uncertainty. Greedy decoding and beam search try to find the "best" output by maximizing likelihood. Temperature sampling embraces controlled randomness. Top-k and top-p filter implausible options while leaving room for variety. The art of working with language models lies in understanding these trade-offs and choosing the right balance for your particular application - balancing creativity with coherence, determinism with diversity, safety with surprise.
+The field continues to evolve with new sampling techniques:
+- **Contrastive decoding**: Explicitly avoids patterns seen in undesirable outputs
+- **Classifier-guided generation**: Uses an auxiliary model to steer generation toward desired attributes like sentiment or topic
+- **Mirostat**: Dynamically adjusts parameters to maintain a target level of randomness throughout generation
+
+As our understanding deepens, we continue developing more sophisticated ways to extract high-quality outputs from these powerful but complex systems.
+
+The fundamental insight underlying all sampling techniques is that **language generation is inherently probabilistic with genuine uncertainty**. Different sampling strategies represent different philosophies about navigating this uncertainty:
+- **Greedy decoding and beam search**: Try to find the "best" output by maximizing likelihood
+- **Temperature sampling**: Embraces controlled randomness
+- **Top-k and top-p**: Filter implausible options while leaving room for variety
+
+The art of working with language models lies in understanding these trade-offs and choosing the right balance for your particular application - balancing creativity with coherence, determinism with diversity, safety with surprise.
 
 
 ---
