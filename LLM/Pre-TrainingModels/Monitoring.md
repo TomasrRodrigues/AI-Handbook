@@ -356,3 +356,8 @@ Logged monitoring data informs future training runs by enabling comparative anal
 This comparative analysis builds **institutional knowledge** - turning LLM training from an expensive black box into a process that can be understood, predicted, and optimized.
 
 > The monitoring landscape continues to evolve. Recent advances include using MoE pathway dynamics as cheap proxies for expensive downstream evaluation, checkpoint merging to extract more value from intermediate checkpoints, and GNS tracking to characterize optimization stability. As models continue to scale and training costs rise, the value of effective monitoring increases proportionally - the difference between successful and failed training is often visible in the monitoring data **thousands of steps before** the outcome becomes apparent in final model quality.
+
+
+<div style="display: flex; justify-content: space-between;">
+  <a href="TrainingOptimization.md">Back</a>
+</div>

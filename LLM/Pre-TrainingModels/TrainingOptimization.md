@@ -383,3 +383,10 @@ Production training pipelines implement **multiple stability layers** - even wit
 - **Distributed fault tolerance** excludes failed nodes automatically and continues with remaining healthy hardware.
 
 > Conservative hyperparameters that sacrifice a few percent of training speed are worthwhile if they reduce catastrophic failure probability from 10% to 1%. The goal is not to maximize instantaneous training speed, but to **maximize the probability of successfully training a good model** given finite resources and time. Stability is the foundation on which efficient training is built.
+
+---
+
+<div style="display: flex; justify-content: space-between;">
+  <a href="DistributedTraining.md">Back</a>
+  <a href="Monitoring.md">Next</a>
+</div>

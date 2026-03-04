@@ -276,3 +276,11 @@ Choosing among these requires understanding your constraints. For maximum perfor
 **Skipping profiling** makes optimization guesswork. Tools like NVIDIA Nsight Systems and PyTorch Profiler reveal whether bottlenecks are compute, communication, or memory - answers that are often surprising. A training job that seems slow due to communication might actually be memory-bound, requiring a different solution entirely.
 
 > The knowledge in this document provides a foundation, but distributed training remains as much art as science. Small inefficiencies multiply across thousands of GPUs and billions of steps - a 1% improvement in efficiency translates to hours saved in total training time and substantial cost reduction. Co-designing model architecture, parallelism strategy, network topology, and software stack together, rather than optimizing each in isolation, is what separates efficient training from simply throwing hardware at the problem.
+
+
+---
+
+<div style="display: flex; justify-content: space-between;">
+  <a href="DataPreparation.md">Back</a>
+  <a href="TrainingOptimization.md">Next</a>
+</div>
