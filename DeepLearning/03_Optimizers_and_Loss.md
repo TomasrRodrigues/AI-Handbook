@@ -27,13 +27,13 @@ $$\theta^* = \arg\min_\theta \mathcal{L}(\theta) = \arg\min_\theta \frac{1}{N}\s
 
 This deceptively simple formulation conceals profound challenges. The loss landscape $\mathcal{L}(\theta)$ for deep networks is high-dimensional and non-convex, with countless local minima, saddle points, and flat regions. The parameter space often reaches into the billions, and mini-batch stochasticity adds noise to gradient estimates. Yet carefully designed loss functions paired with sophisticated optimizers yield models that generalize remarkably well.
 
-Loss functions do more than measure error — they encode inductive biases about problem structure. Cross-entropy implicitly assumes independent label probabilities; MSE assumes Gaussian noise; focal loss assumes class imbalance. Optimizers, in turn, transform those loss gradients into parameter updates. The choice between SGD, RMSprop, and Adam can determine whether a model trains in hours or days, and whether it generalizes or overfits.
+Loss functions do more than measure error - they encode inductive biases about problem structure. Cross-entropy implicitly assumes independent label probabilities; MSE assumes Gaussian noise; focal loss assumes class imbalance. Optimizers, in turn, transform those loss gradients into parameter updates. The choice between SGD, RMSprop, and Adam can determine whether a model trains in hours or days, and whether it generalizes or overfits.
 
 > ***The interplay between loss functions and optimizers determines training dynamics. Understanding both is what separates principled configuration from trial-and-error.***
 
 ### Historical Development
 
-The mathematical foundations trace back to Gauss (c. 1795), who developed least squares for astronomical calculations and established that minimizing squared errors corresponds to maximum likelihood under Gaussian noise. Steepest descent was formalized by Cauchy in 1847, and the Robbins-Monro (1951) stochastic approximation paper provided the theoretical basis for SGD — their convergence conditions ($\sum \eta_t = \infty$, $\sum \eta_t^2 < \infty$) remain a reference point even as modern practice regularly departs from them.
+The mathematical foundations trace back to Gauss (c. 1795), who developed least squares for astronomical calculations and established that minimizing squared errors corresponds to maximum likelihood under Gaussian noise. Steepest descent was formalized by Cauchy in 1847, and the Robbins-Monro (1951) stochastic approximation paper provided the theoretical basis for SGD - their convergence conditions ($\sum \eta_t = \infty$, $\sum \eta_t^2 < \infty$) remain a reference point even as modern practice regularly departs from them.
 
 The 1980s brought momentum (Polyak, 1964; Rumelhart et al., 1986) and Nesterov acceleration (1983). Cross-entropy loss grew from Shannon's information theory (1948). The 2010s then saw rapid development: AdaGrad (2011) introduced per-parameter adaptive rates; RMSprop (Hinton, ~2012) fixed AdaGrad's vanishing rates; Adam (Kingma & Ba, 2014) combined momentum with adaptive rates; AdamW (2017) decoupled weight decay; focal loss (Lin et al., 2017) addressed class imbalance; and LAMB (2019) enabled stable training with batch sizes of 64K. The field continues evolving alongside ever-larger models.
 
@@ -46,9 +46,9 @@ Information theory underpins the loss functions used for classification. For a d
 
 $$H(P) = -\sum_x P(x)\log P(x)$$
 
-It quantifies average surprise — a uniform distribution has maximum entropy; a deterministic one has zero. The **cross-entropy** $H(P, Q) = -\sum_x P(x)\log Q(x)$ measures the expected cost of encoding samples from $P$ using a code optimized for $Q$. When $P$ represents true labels and $Q$ model predictions, minimizing cross-entropy trains the model to assign high probability to true outcomes.
+It quantifies average surprise - a uniform distribution has maximum entropy; a deterministic one has zero. The **cross-entropy** $H(P, Q) = -\sum_x P(x)\log Q(x)$ measures the expected cost of encoding samples from $P$ using a code optimized for $Q$. When $P$ represents true labels and $Q$ model predictions, minimizing cross-entropy trains the model to assign high probability to true outcomes.
 
-The **KL divergence** decomposes as $\mathrm{KL}(P\|Q) = H(P,Q) - H(P)$, so minimizing cross-entropy with respect to $Q$ is equivalent to minimizing KL divergence since $H(P)$ is constant in $Q$. KL divergence is non-negative and equals zero iff $P = Q$, but is asymmetric — a fact that matters when choosing between forward and reverse KL in variational inference.
+The **KL divergence** decomposes as $\mathrm{KL}(P\|Q) = H(P,Q) - H(P)$, so minimizing cross-entropy with respect to $Q$ is equivalent to minimizing KL divergence since $H(P)$ is constant in $Q$. KL divergence is non-negative and equals zero iff $P = Q$, but is asymmetric - a fact that matters when choosing between forward and reverse KL in variational inference.
 
 ### Maximum Likelihood Estimation
 
@@ -56,14 +56,14 @@ The **KL divergence** decomposes as $\mathrm{KL}(P\|Q) = H(P,Q) - H(P)$, so mini
 
 $$\theta_\mathrm{MLE} = \arg\max_\theta \sum_{i=1}^N \log p_\theta(y^{(i)} \mid \mathbf{x}^{(i)})$$
 
-Different noise assumptions yield different loss functions. Assuming Gaussian noise $y = f_\theta(\mathbf{x}) + \varepsilon$, $\varepsilon \sim \mathcal{N}(0, \sigma^2)$, the negative log-likelihood reduces to **MSE**. Assuming Bernoulli targets with $p_\theta(y=1|\mathbf{x}) = \sigma(f_\theta(\mathbf{x}))$ yields **binary cross-entropy**. Assuming a categorical distribution with softmax outputs yields **categorical cross-entropy**. This probabilistic grounding explains why these standard losses are not arbitrary choices — they are the correct likelihoods for their respective noise models.
+Different noise assumptions yield different loss functions. Assuming Gaussian noise $y = f_\theta(\mathbf{x}) + \varepsilon$, $\varepsilon \sim \mathcal{N}(0, \sigma^2)$, the negative log-likelihood reduces to **MSE**. Assuming Bernoulli targets with $p_\theta(y=1|\mathbf{x}) = \sigma(f_\theta(\mathbf{x}))$ yields **binary cross-entropy**. Assuming a categorical distribution with softmax outputs yields **categorical cross-entropy**. This probabilistic grounding explains why these standard losses are not arbitrary choices - they are the correct likelihoods for their respective noise models.
 
 
 ### Optimization Theory Fundamentals
 
-A function $f$ is **convex** if it satisfies $f(\lambda \mathbf{x} + (1-\lambda)\mathbf{y}) \le \lambda f(\mathbf{x}) + (1-\lambda)f(\mathbf{y})$ for all $\mathbf{x}, \mathbf{y}$ and $\lambda \in [0,1]$. Equivalently, $f(\mathbf{y}) \ge f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{y}-\mathbf{x})$ — the function lies above every tangent hyperplane. Convex functions have no local minima other than global ones, a property neural network losses do not enjoy.
+A function $f$ is **convex** if it satisfies $f(\lambda \mathbf{x} + (1-\lambda)\mathbf{y}) \le \lambda f(\mathbf{x}) + (1-\lambda)f(\mathbf{y})$ for all $\mathbf{x}, \mathbf{y}$ and $\lambda \in [0,1]$. Equivalently, $f(\mathbf{y}) \ge f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{y}-\mathbf{x})$ - the function lies above every tangent hyperplane. Convex functions have no local minima other than global ones, a property neural network losses do not enjoy.
 
-A function is **$L$-smooth** if $\|\nabla f(\mathbf{x}) - \nabla f(\mathbf{y})\| \le L\|\mathbf{x}-\mathbf{y}\|$, bounding how fast gradients can change and ensuring gradient descent can make progress with appropriately sized steps. It is **$\mu$-strongly convex** if $f(\mathbf{y}) \ge f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{y}-\mathbf{x}) + \frac{\mu}{2}\|\mathbf{y}-\mathbf{x}\|^2$, implying a unique global minimum and linear convergence rates. The **condition number** $\kappa = L/\mu$ quantifies optimization difficulty — larger $\kappa$ means a more ill-conditioned problem where gradient descent converges slowly.
+A function is **$L$-smooth** if $\|\nabla f(\mathbf{x}) - \nabla f(\mathbf{y})\| \le L\|\mathbf{x}-\mathbf{y}\|$, bounding how fast gradients can change and ensuring gradient descent can make progress with appropriately sized steps. It is **$\mu$-strongly convex** if $f(\mathbf{y}) \ge f(\mathbf{x}) + \nabla f(\mathbf{x})^\top(\mathbf{y}-\mathbf{x}) + \frac{\mu}{2}\|\mathbf{y}-\mathbf{x}\|^2$, implying a unique global minimum and linear convergence rates. The **condition number** $\kappa = L/\mu$ quantifies optimization difficulty - larger $\kappa$ means a more ill-conditioned problem where gradient descent converges slowly.
 
 
 ## Loss Functions for Regression
@@ -83,7 +83,7 @@ The gradient $\partial \ell / \partial \hat{y} = \hat{y} - y$ is simple and prop
 
 $$\ell_\mathrm{MAE}(\hat{y}, y) = |\hat{y} - y|$$
 
-The gradient is $\mathrm{sign}(\hat{y} - y)$ — constant magnitude regardless of error size — meaning large and small errors are treated equally. This prevents outlier dominance but can slow convergence from large initialization errors. MAE corresponds to MLE under Laplace (double-exponential) noise. The non-differentiability at $\hat{y} = y$ is handled via subgradients in practice.
+The gradient is $\mathrm{sign}(\hat{y} - y)$ - constant magnitude regardless of error size - meaning large and small errors are treated equally. This prevents outlier dominance but can slow convergence from large initialization errors. MAE corresponds to MLE under Laplace (double-exponential) noise. The non-differentiability at $\hat{y} = y$ is handled via subgradients in practice.
 
 
 ### Huber Loss
@@ -92,7 +92,7 @@ The gradient is $\mathrm{sign}(\hat{y} - y)$ — constant magnitude regardless o
 
 $$\ell_\delta(\hat{y}, y) = \begin{cases} \frac{1}{2}(\hat{y}-y)^2 & \text{if } |\hat{y}-y| \le \delta \\ \delta|\hat{y}-y| - \frac{1}{2}\delta^2 & \text{if } |\hat{y}-y| > \delta \end{cases}$$
 
-For errors below $\delta$ it behaves like MSE (efficient convergence); above $\delta$ it switches to linear growth like MAE (robust to outliers). The gradient is bounded by $\delta$, preventing explosion from large errors while remaining differentiable everywhere. Choosing $\delta$ requires domain knowledge — typically set near the expected noise level or cross-validated.
+For errors below $\delta$ it behaves like MSE (efficient convergence); above $\delta$ it switches to linear growth like MAE (robust to outliers). The gradient is bounded by $\delta$, preventing explosion from large errors while remaining differentiable everywhere. Choosing $\delta$ requires domain knowledge - typically set near the expected noise level or cross-validated.
 
 
 ### Quantile Loss and Heteroscedastic Regression
@@ -140,7 +140,7 @@ where $p_t$ is the probability assigned to the true class, $\alpha_t$ is a class
 
 $$\ell_\mathrm{hinge}(z, y) = \max(0, 1 - y \cdot z)$$
 
-It encourages predictions with margin: once $y \cdot z \ge 1$, the loss is exactly zero and no further optimization occurs for that example. This saturation makes hinge loss appropriate when calibrated probabilities are not needed — only correct relative ordering of scores matters. For multi-class settings, it generalizes to penalizing any class score within margin 1 of the true class score.
+It encourages predictions with margin: once $y \cdot z \ge 1$, the loss is exactly zero and no further optimization occurs for that example. This saturation makes hinge loss appropriate when calibrated probabilities are not needed - only correct relative ordering of scores matters. For multi-class settings, it generalizes to penalizing any class score within margin 1 of the true class score.
 
 
 ## Gradient Descent and Momentum Methods
@@ -153,9 +153,9 @@ $$\theta_{t+1} = \theta_t - \eta \nabla \mathcal{L}(\theta_t)$$
 
 For convex $L$-smooth functions with $\eta \le 1/L$, this achieves $O(1/T)$ convergence; for strongly convex functions, linear convergence at rate $(1 - \mu\eta)^T$. In practice, computing the full gradient over $N$ examples per step is prohibitively expensive for large datasets.
 
-**Stochastic gradient descent (SGD)** replaces the full gradient with a single-example estimate $\nabla \ell(f_\theta(\mathbf{x}^{(i_t)}), y^{(i_t)})$. This estimate is unbiased — $\mathbb{E}[\cdot] = \nabla \mathcal{L}(\theta)$ — and reduces per-iteration cost from $O(N)$ to $O(1)$. Beyond computational efficiency, SGD's noise provides implicit regularization: gradient noise preferentially escapes sharp minima that generalize poorly, helping find flatter minima that transfer better to test data. This partially explains why SGD often generalizes better than deterministic methods even at similar training loss.
+**Stochastic gradient descent (SGD)** replaces the full gradient with a single-example estimate $\nabla \ell(f_\theta(\mathbf{x}^{(i_t)}), y^{(i_t)})$. This estimate is unbiased - $\mathbb{E}[\cdot] = \nabla \mathcal{L}(\theta)$ - and reduces per-iteration cost from $O(N)$ to $O(1)$. Beyond computational efficiency, SGD's noise provides implicit regularization: gradient noise preferentially escapes sharp minima that generalize poorly, helping find flatter minima that transfer better to test data. This partially explains why SGD often generalizes better than deterministic methods even at similar training loss.
 
-**Mini-batch SGD** averages gradients over $B$ examples, balancing estimation accuracy against hardware efficiency. Typical batch sizes range from 32 to 512 for standard training — GPUs process moderate batches with minimal overhead relative to single examples. Very large batches reduce gradient noise, potentially hurting generalization by converging to sharper minima; techniques like learning rate scaling ($\eta \propto B$) and warmup mitigate this.
+**Mini-batch SGD** averages gradients over $B$ examples, balancing estimation accuracy against hardware efficiency. Typical batch sizes range from 32 to 512 for standard training - GPUs process moderate batches with minimal overhead relative to single examples. Very large batches reduce gradient noise, potentially hurting generalization by converging to sharper minima; techniques like learning rate scaling ($\eta \propto B$) and warmup mitigate this.
 
 ### Classical Momentum
 
@@ -163,7 +163,7 @@ For convex $L$-smooth functions with $\eta \le 1/L$, this achieves $O(1/T)$ conv
 
 $$v_{t+1} = \beta v_t + \nabla \mathcal{L}(\theta_t), \quad \theta_{t+1} = \theta_t - \eta v_{t+1}$$
 
-With $\beta = 0.9$, the velocity is approximately an equal-weighted average of the last $\sim\!10$ gradients. In ravine-shaped loss landscapes — long narrow valleys common in neural networks — gradients oscillate perpendicular to the optimal direction while pointing weakly along it. Momentum cancels the oscillations and accumulates velocity down the valley, dramatically accelerating convergence. For convex quadratics, optimal momentum with $\beta = \left(\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\right)^2$ achieves convergence rate $O\!\left((1 - 1/\sqrt{\kappa})^t\right)$ versus $O\!\left((1 - 1/\kappa)^t\right)$ for plain gradient descent — a major improvement for ill-conditioned problems.
+With $\beta = 0.9$, the velocity is approximately an equal-weighted average of the last $\sim\!10$ gradients. In ravine-shaped loss landscapes - long narrow valleys common in neural networks - gradients oscillate perpendicular to the optimal direction while pointing weakly along it. Momentum cancels the oscillations and accumulates velocity down the valley, dramatically accelerating convergence. For convex quadratics, optimal momentum with $\beta = \left(\frac{\sqrt{\kappa}-1}{\sqrt{\kappa}+1}\right)^2$ achieves convergence rate $O\!\left((1 - 1/\sqrt{\kappa})^t\right)$ versus $O\!\left((1 - 1/\kappa)^t\right)$ for plain gradient descent - a major improvement for ill-conditioned problems.
 
 ### Nesterov Accelerated Gradient
 
@@ -182,7 +182,7 @@ By first making the momentum step and then computing the gradient, NAG gets bett
 
 $$\theta_{t+1} = \theta_t - \frac{\eta}{\sqrt{G_t + \varepsilon}} \odot g_t$$
 
-Parameters receiving large historical gradients get smaller effective learning rates; rarely updated parameters (sparse gradients in NLP) get larger ones. This adapts the learning rate to local geometry and proves theoretically effective for sparse gradients. Its fatal weakness is monotonic accumulation — $G_t$ grows indefinitely, causing learning rates to shrink to zero and learning to stall before convergence.
+Parameters receiving large historical gradients get smaller effective learning rates; rarely updated parameters (sparse gradients in NLP) get larger ones. This adapts the learning rate to local geometry and proves theoretically effective for sparse gradients. Its fatal weakness is monotonic accumulation - $G_t$ grows indefinitely, causing learning rates to shrink to zero and learning to stall before convergence.
 
 ### RMSprop
 
@@ -203,7 +203,7 @@ Since both are initialized at zero, bias correction is applied: $\hat{m}_t = m_t
 
 $$\theta_{t+1} = \theta_t - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \varepsilon}$$
 
-Default hyperparameters $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\varepsilon = 10^{-8}$ work well across diverse tasks, making Adam a robust default requiring minimal tuning. Its adaptive rates handle varying curvature, and momentum helps navigate ravines and plateaus. Despite faster initial convergence compared to SGD, Adam sometimes achieves lower final accuracy on vision tasks — SGD's noisier updates find flatter, more generalizable minima.
+Default hyperparameters $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\varepsilon = 10^{-8}$ work well across diverse tasks, making Adam a robust default requiring minimal tuning. Its adaptive rates handle varying curvature, and momentum helps navigate ravines and plateaus. Despite faster initial convergence compared to SGD, Adam sometimes achieves lower final accuracy on vision tasks - SGD's noisier updates find flatter, more generalizable minima.
 
 ### AdamW
 
@@ -216,15 +216,15 @@ Weight decay is now proportional to parameter magnitude and learning rate, indep
 
 ## Learning Rate Schedules
 
-The learning rate is the single most important hyperparameter in neural network training. Early training benefits from large rates to explore broadly and escape poor initialization; later training needs small rates for fine-grained convergence near minima. A fixed learning rate satisfies neither regime simultaneously — schedules adapt it over time.
+The learning rate is the single most important hyperparameter in neural network training. Early training benefits from large rates to explore broadly and escape poor initialization; later training needs small rates for fine-grained convergence near minima. A fixed learning rate satisfies neither regime simultaneously - schedules adapt it over time.
 
-**Step decay** reduces the rate by a constant factor $\gamma \approx 0.1$ at predetermined epochs: $\eta_t = \eta_0 \cdot \gamma^{\lfloor t/T_\mathrm{step} \rfloor}$. Simple and effective — many landmark results (ResNet, AlexNet) used this — but requires choosing decay epochs manually, often based on validation plateaus.
+**Step decay** reduces the rate by a constant factor $\gamma \approx 0.1$ at predetermined epochs: $\eta_t = \eta_0 \cdot \gamma^{\lfloor t/T_\mathrm{step} \rfloor}$. Simple and effective - many landmark results (ResNet, AlexNet) used this - but requires choosing decay epochs manually, often based on validation plateaus.
 
 **Cosine annealing** (Loshchilov & Hutter, 2016) smoothly decays following a cosine curve:
 
 $$\eta_t = \eta_\mathrm{min} + \frac{\eta_\mathrm{max} - \eta_\mathrm{min}}{2}\!\left(1 + \cos\frac{\pi t}{T}\right)$$
 
-No decay factor or step timing is needed — only $\eta_\mathrm{max}$, $\eta_\mathrm{min}$, and $T$. **Cosine annealing with warm restarts (SGDR)** periodically resets $\eta$ to $\eta_\mathrm{max}$ and anneals down again, enabling potential escape from local minima with gradually increasing restart periods.
+No decay factor or step timing is needed - only $\eta_\mathrm{max}$, $\eta_\mathrm{min}$, and $T$. **Cosine annealing with warm restarts (SGDR)** periodically resets $\eta$ to $\eta_\mathrm{max}$ and anneals down again, enabling potential escape from local minima with gradually increasing restart periods.
 
 **Learning rate warmup** linearly increases $\eta$ from near zero to the target over $T_\mathrm{warmup}$ steps: $\eta_t = \eta_\mathrm{target} \cdot \min(1, t/T_\mathrm{warmup})$. This prevents large destabilizing updates when gradients are unreliable in early training, and is especially critical for large-batch training and transformers.
 
@@ -234,15 +234,15 @@ No decay factor or step timing is needed — only $\eta_\mathrm{max}$, $\eta_\ma
 
 ### Convex and Strongly Convex Settings
 
-For convex $L$-smooth functions with $\eta \le 1/L$, gradient descent satisfies $f(\theta_T) - f(\theta^*) \le L\|\theta_0 - \theta^*\|^2/(2T)$ — sublinear $O(1/T)$ convergence. For $\mu$-strongly convex functions, the error decays geometrically: $f(\theta_T) - f(\theta^*) \le (1-\mu/L)^T(f(\theta_0) - f(\theta^*))$. The condition number $\kappa = L/\mu$ governs speed. For SGD with variance $\sigma^2$, the convergence bound gains a noise floor $\eta\sigma^2/2$ that prevents exact convergence with constant learning rates, motivating decaying schedules.
+For convex $L$-smooth functions with $\eta \le 1/L$, gradient descent satisfies $f(\theta_T) - f(\theta^*) \le L\|\theta_0 - \theta^*\|^2/(2T)$ - sublinear $O(1/T)$ convergence. For $\mu$-strongly convex functions, the error decays geometrically: $f(\theta_T) - f(\theta^*) \le (1-\mu/L)^T(f(\theta_0) - f(\theta^*))$. The condition number $\kappa = L/\mu$ governs speed. For SGD with variance $\sigma^2$, the convergence bound gains a noise floor $\eta\sigma^2/2$ that prevents exact convergence with constant learning rates, motivating decaying schedules.
 
 ### Non-Convex Optimization
 
-Neural network losses are non-convex, but modern analysis reveals surprisingly benign landscapes under overparameterization. With more parameters than training examples, all local minima may have similar loss values, and most critical points are saddle points rather than poor local minima. Natural SGD noise efficiently escapes saddle points — adding random perturbation directs optimization toward actual local minima. For smooth non-convex functions, gradient descent finds $\varepsilon$-approximate stationary points ($\|\nabla f\| \le \varepsilon$) in $O(1/\varepsilon^2)$ iterations.
+Neural network losses are non-convex, but modern analysis reveals surprisingly benign landscapes under overparameterization. With more parameters than training examples, all local minima may have similar loss values, and most critical points are saddle points rather than poor local minima. Natural SGD noise efficiently escapes saddle points - adding random perturbation directs optimization toward actual local minima. For smooth non-convex functions, gradient descent finds $\varepsilon$-approximate stationary points ($\|\nabla f\| \le \varepsilon$) in $O(1/\varepsilon^2)$ iterations.
 
 ### The Generalization–Optimization Tradeoff
 
-Fast convergence to low training loss does not guarantee good test performance. **Sharp minima** — solutions in narrow basins where loss increases rapidly with small perturbations — often generalize poorly. **Flat minima** — in broad basins — generalize better. SGD noise naturally favors flatter minima compared to batch gradient descent. Large-batch training suppresses this noise, producing sharper minima and a "generalization gap" that motivated LARS, LAMB, and warmup techniques. Early stopping, rather than full convergence, acts as implicit regularization by preventing overfitting.
+Fast convergence to low training loss does not guarantee good test performance. **Sharp minima** - solutions in narrow basins where loss increases rapidly with small perturbations - often generalize poorly. **Flat minima** - in broad basins - generalize better. SGD noise naturally favors flatter minima compared to batch gradient descent. Large-batch training suppresses this noise, producing sharper minima and a "generalization gap" that motivated LARS, LAMB, and warmup techniques. Early stopping, rather than full convergence, acts as implicit regularization by preventing overfitting.
 
 ## Practical Training Considerations
 
@@ -252,7 +252,7 @@ Parameter initialization significantly affects optimization. **Xavier/Glorot ini
 
 ### Gradient Clipping
 
-Gradient clipping prevents explosion, especially in RNNs and transformers on long sequences. **Norm clipping** — the generally preferred form — scales the entire gradient when its norm exceeds a threshold:
+Gradient clipping prevents explosion, especially in RNNs and transformers on long sequences. **Norm clipping** - the generally preferred form - scales the entire gradient when its norm exceeds a threshold:
 
 $$\text{if } \|g\| > \tau: \quad g \leftarrow \frac{\tau}{\|g\|} g$$
 
@@ -260,13 +260,13 @@ This preserves gradient direction while limiting magnitude. Thresholds between 1
 
 ### Normalization Layers
 
-**Batch normalization** normalizes layer inputs to zero mean and unit variance within each mini-batch, then applies learnable scale $\gamma$ and shift $\beta$. It dramatically accelerates training by reducing internal covariate shift, enables higher learning rates, and acts as a regularizer through batch-level noise. Its weakness is coupling across examples — very small batches yield poor statistics, and behavior differs between training and inference.
+**Batch normalization** normalizes layer inputs to zero mean and unit variance within each mini-batch, then applies learnable scale $\gamma$ and shift $\beta$. It dramatically accelerates training by reducing internal covariate shift, enables higher learning rates, and acts as a regularizer through batch-level noise. Its weakness is coupling across examples - very small batches yield poor statistics, and behavior differs between training and inference.
 
 **Layer normalization** normalizes across features instead of the batch dimension, making statistics independent of batch size. This is preferable for RNNs and transformers where batches may be small or variable.
 
 ### Debugging Training Failures
 
-Most training failures have systematic causes. When **loss is not decreasing**, verify data loading and label integrity, confirm the loss computation is correct, and test on a small overfit-capable subset. A **NaN loss** signals gradient explosion — add gradient clipping, reduce learning rate, or revisit initialization. When **training loss falls but validation loss rises**, overfitting has begun — add regularization (weight decay, dropout), use early stopping, or augment data. **Oscillating loss** indicates the learning rate is too large or batches too small. **High variance across runs** points to initialization sensitivity — average multiple seeds and consider adding batch normalization.
+Most training failures have systematic causes. When **loss is not decreasing**, verify data loading and label integrity, confirm the loss computation is correct, and test on a small overfit-capable subset. A **NaN loss** signals gradient explosion - add gradient clipping, reduce learning rate, or revisit initialization. When **training loss falls but validation loss rises**, overfitting has begun - add regularization (weight decay, dropout), use early stopping, or augment data. **Oscillating loss** indicates the learning rate is too large or batches too small. **High variance across runs** points to initialization sensitivity - average multiple seeds and consider adding batch normalization.
 
 ## Specialized Loss Functions
 
@@ -276,11 +276,11 @@ Contrastive learning trains embeddings so similar examples are nearby and dissim
 
 $$\ell_\mathrm{triplet} = \max\!\left(0,\; \|f(\text{anchor}) - f(\text{positive})\|^2 - \|f(\text{anchor}) - f(\text{negative})\|^2 + \mathrm{margin}\right)$$
 
-It pushes positives closer than negatives by at least the margin, saturating to zero once the constraint is satisfied. **InfoNCE** (from SimCLR, MoCo) reframes contrastive learning as classification — identifying the positive example among negatives using a temperature-scaled softmax. This scales naturally to large numbers of negatives and forms the backbone of modern self-supervised representation learning.
+It pushes positives closer than negatives by at least the margin, saturating to zero once the constraint is satisfied. **InfoNCE** (from SimCLR, MoCo) reframes contrastive learning as classification - identifying the positive example among negatives using a temperature-scaled softmax. This scales naturally to large numbers of negatives and forms the backbone of modern self-supervised representation learning.
 
 ### Multi-Task and Auxiliary Losses
 
-Multi-task learning combines losses across tasks: $\mathcal{L}_\mathrm{total} = \sum_i w_i \mathcal{L}_i(\theta_\mathrm{shared}, \theta_i)$. Balancing weights $w_i$ is critical — tasks with different loss scales or difficulties can dominate training if not weighted appropriately. **GradNorm** automatically balances task weights by equalizing gradient magnitudes across tasks. Auxiliary losses (reconstruction, contrastive, adversarial) impose inductive biases or additional regularization that often improves primary task performance beyond what the task loss alone achieves.
+Multi-task learning combines losses across tasks: $\mathcal{L}_\mathrm{total} = \sum_i w_i \mathcal{L}_i(\theta_\mathrm{shared}, \theta_i)$. Balancing weights $w_i$ is critical - tasks with different loss scales or difficulties can dominate training if not weighted appropriately. **GradNorm** automatically balances task weights by equalizing gradient magnitudes across tasks. Auxiliary losses (reconstruction, contrastive, adversarial) impose inductive biases or additional regularization that often improves primary task performance beyond what the task loss alone achieves.
 
 ### Perceptual Loss
 
@@ -308,7 +308,7 @@ Each layer's update is scaled proportionally to its parameter magnitude, prevent
 
 **Lookahead** (Zhang et al., 2019) maintains two sets of weights: fast weights updated by any base optimizer, and slow weights that periodically interpolate toward the fast ones. The slow weights smooth out high-frequency oscillations, reducing variance and improving generalization without changing the base optimizer.
 
-**SAM** (Foret et al., 2020) explicitly seeks flat minima by minimizing the worst-case loss in a small neighborhood: $\mathcal{L}_\mathrm{SAM}(\theta) = \max_{\|\varepsilon\| \le \rho} \mathcal{L}(\theta + \varepsilon)$. It computes gradients at a perturbed point $\theta + \rho \nabla\mathcal{L}/\|\nabla\mathcal{L}\|$, doubling gradient evaluations but consistently improving generalization — particularly for transformers and vision models.
+**SAM** (Foret et al., 2020) explicitly seeks flat minima by minimizing the worst-case loss in a small neighborhood: $\mathcal{L}_\mathrm{SAM}(\theta) = \max_{\|\varepsilon\| \le \rho} \mathcal{L}(\theta + \varepsilon)$. It computes gradients at a perturbed point $\theta + \rho \nabla\mathcal{L}/\|\nabla\mathcal{L}\|$, doubling gradient evaluations but consistently improving generalization - particularly for transformers and vision models.
 
 ## Case Studies and Applications
 
@@ -318,11 +318,11 @@ The standard configuration uses **SGD with momentum 0.9**, learning rate 0.1 (wi
 
 ### Training Transformers with Adam
 
-Standard BERT-base training uses AdamW ($\beta_1=0.9$, $\beta_2=0.999$, $\varepsilon=10^{-8}$) with learning rate $10^{-4}$, linear warmup over 10K steps, cosine decay to 0, weight decay 0.01, and gradient clipping at norm 1.0. Warmup is critical — without it, transformers frequently diverge in early training due to unstable second-moment estimates. AdamW's decoupled weight decay significantly improves generalization over standard Adam.
+Standard BERT-base training uses AdamW ($\beta_1=0.9$, $\beta_2=0.999$, $\varepsilon=10^{-8}$) with learning rate $10^{-4}$, linear warmup over 10K steps, cosine decay to 0, weight decay 0.01, and gradient clipping at norm 1.0. Warmup is critical - without it, transformers frequently diverge in early training due to unstable second-moment estimates. AdamW's decoupled weight decay significantly improves generalization over standard Adam.
 
 ### Fine-tuning Pretrained Models
 
-Fine-tuning requires much smaller learning rates ($10^{-5}$ to $10^{-3}$ rather than 0.1), fewer epochs, and often **discriminative learning rates** — lower rates for early layers (general features) and higher for later layers (task-specific). **Gradual unfreezing** — training the final layer first, then progressively unfreezing earlier layers — often outperforms unfreezing everything at once, especially with limited target-domain data, by preventing catastrophic forgetting of useful pretrained representations.
+Fine-tuning requires much smaller learning rates ($10^{-5}$ to $10^{-3}$ rather than 0.1), fewer epochs, and often **discriminative learning rates** - lower rates for early layers (general features) and higher for later layers (task-specific). **Gradual unfreezing** - training the final layer first, then progressively unfreezing earlier layers - often outperforms unfreezing everything at once, especially with limited target-domain data, by preventing catastrophic forgetting of useful pretrained representations.
 
 ## Comparative Analysis and Selection Guidelines
 
@@ -355,11 +355,11 @@ Fine-tuning requires much smaller learning rates ($10^{-5}$ to $10^{-3}$ rather 
 
 ### Monitoring Training
 
-Beyond loss curves, effective monitoring tracks **gradient norms per layer** — very large values ($>10$) suggest instability; very small values ($<10^{-6}$) suggest vanishing gradients or dead neurons. The **update-to-parameter ratio** should be roughly 0.001–0.01; much larger risks instability, much smaller indicates ineffective learning. **Activation distributions** should avoid saturation — for ReLU, most activations should be positive. A **learning rate range test** (sweeping $\eta$ and measuring loss) quickly identifies the maximum usable learning rate, typically just before the loss begins to diverge.
+Beyond loss curves, effective monitoring tracks **gradient norms per layer** - very large values ($>10$) suggest instability; very small values ($<10^{-6}$) suggest vanishing gradients or dead neurons. The **update-to-parameter ratio** should be roughly 0.001–0.01; much larger risks instability, much smaller indicates ineffective learning. **Activation distributions** should avoid saturation - for ReLU, most activations should be positive. A **learning rate range test** (sweeping $\eta$ and measuring loss) quickly identifies the maximum usable learning rate, typically just before the loss begins to diverge.
 
 ### Reproducibility
 
-Set all random seeds (Python, NumPy, framework) at the start, document all hyperparameters in version-controlled config files, and run experiments with at least 3–5 seeds before reporting results. Single-seed comparisons are unreliable due to initialization and sampling variance. Never use test set performance to guide hyperparameter decisions — validation-only tuning, then a single test evaluation.
+Set all random seeds (Python, NumPy, framework) at the start, document all hyperparameters in version-controlled config files, and run experiments with at least 3–5 seeds before reporting results. Single-seed comparisons are unreliable due to initialization and sampling variance. Never use test set performance to guide hyperparameter decisions - validation-only tuning, then a single test evaluation.
 
 ### Knowledge Distillation
 
@@ -371,8 +371,8 @@ Temperature $T > 1$ softens both distributions, revealing the teacher's similari
 
 ## Conclusion
 
-Loss functions and optimizers are the essential machinery translating architecture, data, and inductive biases into learned models. Their choices are not arbitrary — each loss corresponds to a probabilistic assumption about noise; each optimizer embodies decades of optimization theory.
+Loss functions and optimizers are the essential machinery translating architecture, data, and inductive biases into learned models. Their choices are not arbitrary - each loss corresponds to a probabilistic assumption about noise; each optimizer embodies decades of optimization theory.
 
-Several principles stand out. **Match loss to problem structure**: the statistical model underlying each loss function tells you when it is appropriate. **No optimizer dominates universally**: SGD with momentum often generalizes best for vision; Adam and AdamW excel for transformers; LAMB enables large-batch distributed training. **Learning rate is the most critical hyperparameter** and should be scheduled — warmup, cosine decay, and one-cycle policies each address different training regimes. **Optimization and generalization can pull in opposite directions**: SGD noise, weight decay, early stopping, and flat-minima-seeking optimizers like SAM shape whether the minimum found transfers to unseen data.
+Several principles stand out. **Match loss to problem structure**: the statistical model underlying each loss function tells you when it is appropriate. **No optimizer dominates universally**: SGD with momentum often generalizes best for vision; Adam and AdamW excel for transformers; LAMB enables large-batch distributed training. **Learning rate is the most critical hyperparameter** and should be scheduled - warmup, cosine decay, and one-cycle policies each address different training regimes. **Optimization and generalization can pull in opposite directions**: SGD noise, weight decay, early stopping, and flat-minima-seeking optimizers like SAM shape whether the minimum found transfers to unseen data.
 
 The trajectory from Gauss's least squares to modern adaptive optimizers reflects a continual interplay between mathematical theory, hardware constraints, and empirical discovery. As models scale further and tasks grow more complex, this interplay will only deepen.

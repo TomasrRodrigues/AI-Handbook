@@ -1096,7 +1096,7 @@ SVMs are **highly sensitive** to feature scales. Forgetting to scale leads to po
 **Support Vector Machines** represent one of the most **elegant and theoretically sound** approaches in machine learning, combining **solid mathematical foundations** with **practical effectiveness** across diverse applications.
 
 
-SVM goes beyond simply minimizing training error. The **maximum margin principle** seeks the decision boundary that maintains the **greatest possible distance** from training points of all classes. This principle, rooted in **statistical learning theory** and **structural risk minimization**, provides **theoretical guarantees** on generalization performance—the model's ability to **perform well on unseen data**.
+SVM goes beyond simply minimizing training error. The **maximum margin principle** seeks the decision boundary that maintains the **greatest possible distance** from training points of all classes. This principle, rooted in **statistical learning theory** and **structural risk minimization**, provides **theoretical guarantees** on generalization performance-the model's ability to **perform well on unseen data**.
 
 The support vector concept reveals an important insight: ***most training data is redundant for defining the decision boundary***. Only the **critical points near the boundary**, **the support vectors**, determine the classifier. This **sparse representation** leads to **memory-efficient models** and **faster prediction times**.
 

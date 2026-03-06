@@ -52,7 +52,7 @@ The computational cost of processing data at this scale is substantial. Filterin
 
 Research on scaling laws, particularly the Chinchilla work from DeepMind, suggests an optimal ratio of roughly **20 training tokens for every model parameter**. A one billion parameter model should see approximately twenty billion tokens during training. Feeding it significantly more data yields diminishing returns, while using less data leaves capabilities untapped. As models grow larger, the data requirements grow proportionally, but the data must also grow in quality and diversity to justify the increased computational cost.
 
-**The Era of Overtraining:** While Chinchilla established the compute-optimal ratio for a given training budget, modern practice often intentionally violates it to optimize for inference costs. Models like Llama 3 deliberately overtrain — training an 8B parameter model on 15 trillion tokens, far past the point of diminishing returns. The result is a highly capable but smaller model that is significantly cheaper and faster to run in production.
+**The Era of Overtraining:** While Chinchilla established the compute-optimal ratio for a given training budget, modern practice often intentionally violates it to optimize for inference costs. Models like Llama 3 deliberately overtrain - training an 8B parameter model on 15 trillion tokens, far past the point of diminishing returns. The result is a highly capable but smaller model that is significantly cheaper and faster to run in production.
 
 **FineWeb vs. RedPajama:**  
 RedPajama contains approximately **20 trillion tokens** with relatively light filtering, while FineWeb has **15 trillion tokens** but with substantially more aggressive quality curation. Models trained on the smaller but cleaner FineWeb dataset consistently outperformed those trained on the larger RedPajama dataset. Beyond a certain scale, additional low-quality data becomes counterproductive, slowing learning and potentially teaching the model undesirable patterns.
@@ -404,7 +404,7 @@ Transparency about filtering decisions - publishing classifier details, threshol
 
 ### Test Set Decontamination
 
-A critical final step in the filtering pipeline is test set decontamination. Before finalizing the pre-training corpus, engineers must actively scan the data to remove any content that appears in the evaluation benchmarks the model will eventually be tested against — such as MMLU, HumanEval or GSM8K.
+A critical final step in the filtering pipeline is test set decontamination. Before finalizing the pre-training corpus, engineers must actively scan the data to remove any content that appears in the evaluation benchmarks the model will eventually be tested against - such as MMLU, HumanEval or GSM8K.
 
 If benchmark data leaks into the pre-training corpus, the model will essentially memorize the answers to its future final exams, artificially inflating evaluation scores and masking its true zero-shot or few-shot capabilities. Decontamination typically involves searching for exact string matches, heavily overlapping n-grams, or high semantic similarity between training documents and benchmark datasets, then aggressively purging those matches from the training set.
 
@@ -431,7 +431,7 @@ Exact deduplication only catches identical documents. Near-duplicates - document
 
 MinHash works by creating compact signatures that preserve similarity relationships. For each document, you break it into overlapping word sequences called *shingles*, apply multiple hash functions, and keep only the minimum hash value from each function. These minimum values form the MinHash signature. Documents with high shingle overlap will tend to have similar signatures.
 
-The mathematical foundation is **Jaccard similarity** — the size of the intersection divided by the size of the union of two documents' shingle sets:
+The mathematical foundation is **Jaccard similarity** - the size of the intersection divided by the size of the union of two documents' shingle sets:
 
 $$J(A,B) = \frac{|A \cap B|}{|A \cup B|}$$
 

@@ -12,7 +12,7 @@ This repository serves as a comprehensive guide to the structural pillars of mod
 
 
 ## 1. [LLM Architecture Overview](./LLMArchitectureOverview.md)
-The transition from sequential Recurrent Neural Networks (RNNs) to the **Transformer** architecture in 2017 enabled the massive scaling of AI. Modern LLMs contain billions or trillions of parameters and exhibit "emergent capabilities"—skills like complex reasoning that only appear at great scale.
+The transition from sequential Recurrent Neural Networks (RNNs) to the **Transformer** architecture in 2017 enabled the massive scaling of AI. Modern LLMs contain billions or trillions of parameters and exhibit "emergent capabilities"-skills like complex reasoning that only appear at great scale.
 
 * **Core Structure**: Built using stacked layers of Multi-Head Attention and Feed-Forward networks.
 * **Stability Mechanisms**: Uses Residual Connections (shortcuts for gradient flow) and Layer Normalization to keep numerical values stable during training.
