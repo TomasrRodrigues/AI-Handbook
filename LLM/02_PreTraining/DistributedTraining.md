@@ -105,7 +105,7 @@ As context lengths push toward hundreds of thousands of tokens, activation memor
 
 Sequence parallelism distributes the sequence dimension across GPUs. The challenge is that attention creates dependencies between all positions, so each GPU needs information about tokens on other GPUs.
 
-**Ring attention** solves this elegantly. Each GPU holds a quarter of the sequence. GPUs compute attention between their local queries and their local keys, then pass key-value pairs around a ring - GPU 1 → GPU 2 → GPU 3 → GPU 4 → GPU 1. After P complete rotations, each GPU has computed its queries against all keys. Partial outputs accumulate across iterations.
+**Ring attention** solves this elegantly. Each GPU holds a quarter of the sequence. GPUs compute attention between their local queries and their local keys, then pass key-value pairs around a ring - GPU 1 -> GPU 2 -> GPU 3 -> GPU 4 -> GPU 1. After P complete rotations, each GPU has computed its queries against all keys. Partial outputs accumulate across iterations.
 
 **DeepSpeed-Ulysses** takes a different approach, splitting across the head dimension rather than sequence. Each GPU computes all attention for a subset of heads across the full sequence. This requires All-to-All communication before and after attention to transpose data, but achieves perfect load balance - unlike ring attention which has imbalance under causal masking, as later positions have fewer past tokens to attend to.
 

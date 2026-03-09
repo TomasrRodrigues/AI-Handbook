@@ -75,7 +75,7 @@ Lower perplexity generally correlates with better language modeling capability, 
 
 | Pattern | Likely cause |
 |---|---|
-| Sudden spike (loss jumps from 2.5 → 5.0) | Gradient explosion or numerical overflow - requires immediate intervention |
+| Sudden spike (loss jumps from 2.5 -> 5.0) | Gradient explosion or numerical overflow - requires immediate intervention |
 | Loss completely flat for thousands of steps | Stuck training: vanishing gradients or learning rate near zero |
 | Large oscillations (±1.0 or more) | Learning rate too high, poor batch sampling, or data quality issues |
 | Small oscillations (±0.1–0.2) | Acceptable noise |
@@ -135,9 +135,9 @@ GNS is particularly valuable for understanding **curriculum learning effects**. 
 Detecting **NaN** (Not a Number) or **Inf** values is critical because they corrupt all subsequent computation. Once a NaN appears, it propagates through all updated parameters, potentially destroying the model entirely.
 
 **Diagnosing the source:**
-- *NaNs in the first few hundred steps* → initialization problems (parameters too large causing overflow, or too small causing underflow).
-- *NaNs appearing suddenly during stable training* → specific problematic data examples or sequences triggering numerical edge cases.
-- *NaNs appearing gradually after thousands of steps* → accumulated numerical error or an excessively large learning rate.
+- *NaNs in the first few hundred steps* -> initialization problems (parameters too large causing overflow, or too small causing underflow).
+- *NaNs appearing suddenly during stable training* -> specific problematic data examples or sequences triggering numerical edge cases.
+- *NaNs appearing gradually after thousands of steps* -> accumulated numerical error or an excessively large learning rate.
 
 Modern training frameworks typically include automatic NaN detection that halts training immediately and reverts to the last good checkpoint.
 
@@ -297,9 +297,9 @@ Monitoring the data pipeline ensures training receives well-formed, diverse data
 
 | Signal | What it catches |
 |---|---|
-| Average sequence length | Sudden drop → pipeline malfunction producing truncated sequences |
-| Token distribution | Unexpected frequency spikes → data stuck repeating a small subset |
-| Batch loading time vs. compute time | Loading >> compute → data pipeline is the bottleneck |
+| Average sequence length | Sudden drop -> pipeline malfunction producing truncated sequences |
+| Token distribution | Unexpected frequency spikes -> data stuck repeating a small subset |
+| Batch loading time vs. compute time | Loading >> compute -> data pipeline is the bottleneck |
 | Perplexity of training examples under a reference model | Distributional drift in incoming data |
 
 ### Cost and Efficiency Monitoring

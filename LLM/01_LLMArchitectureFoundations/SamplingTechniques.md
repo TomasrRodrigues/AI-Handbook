@@ -103,17 +103,17 @@ At high temperature, we divide logits by a number greater than one, making the d
 Let's see this with our $\text{"The cat sat on the"}$ example. 
 
 **At temperature 0.5** (conservative):
-- "mat": 0.31 → 0.55
-- "floor": 0.25 → 0.20
-- "chair": 0.18 → 0.10
+- "mat": 0.31 -> 0.55
+- "floor": 0.25 -> 0.20
+- "chair": 0.18 -> 0.10
 
 The model has become more confident that "mat" is correct.
 
 **At temperature 1.5** (exploratory):
-- "mat": 0.31 → 0.22
-- "floor": 0.25 → 0.20
-- "chair": 0.18 → 0.17
-- "roof": 0.02 → 0.08
+- "mat": 0.31 -> 0.22
+- "floor": 0.25 -> 0.20
+- "chair": 0.18 -> 0.17
+- "roof": 0.02 -> 0.08
 
 The model is now much more willing to explore alternatives.
 

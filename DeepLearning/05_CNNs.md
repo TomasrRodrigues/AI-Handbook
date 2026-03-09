@@ -478,7 +478,7 @@ A defining characteristic of CNNs is hierarchical feature learning: simple featu
 - **Layer 4:** object parts (faces, limbs, wheels)
 - **Layer 5:** whole objects and scenes
 
-This mirrors the visual cortex hierarchy: V1 (simple features) → V2 (texture, contours) → V4 (complex shapes) → IT (objects). The hierarchical organization enables **compositional generalization**: a network that learns distinct "eye" and "nose" detectors can combine them to recognize faces, even if specific face configurations weren't seen during training. This compositional structure allows CNNs to represent complex functions with exponential parameter efficiency:
+This mirrors the visual cortex hierarchy: V1 (simple features) -> V2 (texture, contours) -> V4 (complex shapes) -> IT (objects). The hierarchical organization enables **compositional generalization**: a network that learns distinct "eye" and "nose" detectors can combine them to recognize faces, even if specific face configurations weren't seen during training. This compositional structure allows CNNs to represent complex functions with exponential parameter efficiency:
 
 > ***Theorem (Exponential Advantage of Depth; Delalleau & Bengio, 2011).** For certain function families, depth-$L$ networks with $\mathcal{O}(\text{poly}(n))$ parameters can represent functions requiring $\mathcal{O}(\exp(n))$ parameters for depth-1 networks.*
 

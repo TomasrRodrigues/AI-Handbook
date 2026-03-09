@@ -20,7 +20,7 @@ Before a single training step runs, you must assemble and clean a corpus often m
 - **PII & toxicity removal** - scrubbing private information and harmful content.
 - **Data mixing** - deciding how to weight different sources in the final corpus.
 
-→ *[Read the full Data Preparation guide](DataPreparation.md)*
+-> *[Read the full Data Preparation guide](DataPreparation.md)*
 
 
 ### 2. [Distributed Training](DistributedTraining.md)
@@ -35,7 +35,7 @@ A 175B parameter model requires over **2 TB** of memory for parameters, optimize
 
 Real deployments combine all four, mapped to hardware topology. Meta's Llama 3 used 8× tensor × 4× pipeline × 64× data parallelism across 16,384 H100s.
 
-→ *[Read the full Distributed Training guide](DistributedTraining.md)*
+-> *[Read the full Distributed Training guide](DistributedTraining.md)*
 
 
 ### 3. [Training Optimization](TrainingOptimization.md)
@@ -49,7 +49,7 @@ With data and infrastructure in place, the optimization process determines wheth
 - **Mixed precision** - BF16 for most compute; FP32 for numerically sensitive operations like LayerNorm and softmax.
 - **Gradient accumulation** - enables large effective batch sizes without proportionally large memory.
 
-→ *[Read the full Training Optimization guide](TrainingOptimization.md)*
+-> *[Read the full Training Optimization guide](TrainingOptimization.md)*
 
 
 ### 4. [Monitoring](Monitoring.md)
@@ -65,7 +65,7 @@ Training loss can decrease smoothly while downstream capabilities plateau, regre
 | Activation statistics | Every 100–1,000 steps | Internal representation collapse |
 | Downstream benchmarks | Every few thousand steps | Whether cheap metrics reflect real capabilities |
 
-→ *[Read the full Monitoring guide](Monitoring.md)*
+-> *[Read the full Monitoring guide](Monitoring.md)*
 
 
 ## How the Pillars Interact

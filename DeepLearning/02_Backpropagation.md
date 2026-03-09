@@ -86,7 +86,7 @@ Stochastic gradient descent is justified probabilistically: each minibatch gradi
 
 ### Complete Derivation: Two-Layer Network
 
-**Architecture:** 3 inputs → 4 hidden neurons (ReLU) → 1 output (Sigmoid) → Binary cross-entropy loss
+**Architecture:** 3 inputs -> 4 hidden neurons (ReLU) -> 1 output (Sigmoid) -> Binary cross-entropy loss
 
 #### Forward Propagation
 
@@ -214,7 +214,7 @@ For a simplified analysis with constant weight norms $\|W^{(\ell)}\| \approx W$ 
 
 $$\|\delta^{(\ell)}\| \lesssim \|\delta^{(L)}\| \cdot (W \cdot \gamma)^{L-\ell}$$
 
-> ***If $W \cdot \gamma < 1$: gradients shrink exponentially → vanishing. If $W \cdot \gamma > 1$: gradients grow exponentially → exploding.***
+> ***If $W \cdot \gamma < 1$: gradients shrink exponentially -> vanishing. If $W \cdot \gamma > 1$: gradients grow exponentially -> exploding.***
 
 ### Vanishing Gradients: Causes and Consequences
 
@@ -387,8 +387,8 @@ In reinforcement learning, backpropagation trains neural network function approx
 
 | Hyperparameter | Typical Range | Effect on Training |
 |---------------|--------------|-------------------|
-| Learning rate $\eta$ | $10^{-4}$ to $10^{-1}$ | **Most critical**: too large → divergence; too small → slow convergence |
-| Batch size $B$ | 32–512 | Larger → more accurate gradient, fewer updates per epoch; affects generalization |
+| Learning rate $\eta$ | $10^{-4}$ to $10^{-1}$ | **Most critical**: too large -> divergence; too small -> slow convergence |
+| Batch size $B$ | 32–512 | Larger -> more accurate gradient, fewer updates per epoch; affects generalization |
 | Weight init scale | Principled (Xavier, He) | Affects initial gradient magnitudes and early-phase convergence speed |
 
 Automated tuning approaches such as Bayesian optimization and population-based training can search these spaces systematically. That said, understanding the mechanistic effect of each hyperparameter enables more targeted manual adjustment and is often faster than blind search for finding the root cause of a training problem.

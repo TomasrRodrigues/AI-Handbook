@@ -204,7 +204,7 @@ This smooth, monotonic decay has become the de facto standard, used by GPT, LLaM
 
 **Key advantages over cosine decay:**
 - Training can be **extended into the stable phase** without degrading optimization quality.
-- **Multi-stage training** (e.g., web data → curated data → domain data) becomes cleaner - each stage uses its own stable+decay schedule.
+- **Multi-stage training** (e.g., web data -> curated data -> domain data) becomes cleaner - each stage uses its own stable+decay schedule.
 - The peak learning rate during the stable phase can be **tuned independently of total duration**, simplifying hyperparameter transfer between different-length runs.
 
 Empirically, cosine decay often achieves slightly better final performance on well-planned runs where total duration is known precisely. However, for training requiring flexibility - uncertain compute availability, multi-stage pipelines, or potential extension - WSD provides substantial practical advantages with only modest performance trade-offs.
@@ -247,8 +247,8 @@ $$\mathbf{g} \leftarrow \mathbf{g} \cdot \frac{\tau}{\|\mathbf{g}\|}$$
 This preserves gradient **directions** while bounding their magnitude, and intervenes only when necessary - for the vast majority of steps where gradients are reasonable, clipping does nothing.
 
 **Monitoring gradient norms** during training is highly informative:
-- Norms **frequently hitting the threshold** → learning rate may be too high, or instability is present.
-- Norms **consistently far below the threshold** → the threshold may be unnecessarily restrictive.
+- Norms **frequently hitting the threshold** -> learning rate may be too high, or instability is present.
+- Norms **consistently far below the threshold** -> the threshold may be unnecessarily restrictive.
 
 > **Mixed precision interaction:** In FP16 training with gradient scaling, gradients must be **unscaled before clipping** and re-scaled after. Modern frameworks handle this automatically, but understanding the interaction prevents subtle bugs.
 
@@ -287,8 +287,8 @@ Gradient checkpointing (also called activation recomputation) **trades computati
 | Full recomputation | Maximum | ~100% extra |
 
 **Selective checkpointing** improves on uniform strategies by considering each layer individually:
-- **Attention layers** - high memory cost (large attention score matrices), low recomputation cost → good candidates for recomputation.
-- **Feed-forward layers** - smaller activation memory, higher recomputation cost → better candidates for checkpointing outputs.
+- **Attention layers** - high memory cost (large attention score matrices), low recomputation cost -> good candidates for recomputation.
+- **Feed-forward layers** - smaller activation memory, higher recomputation cost -> better candidates for checkpointing outputs.
 
 **FlashAttention** exemplifies this at the hardware level. Rather than materializing the full attention score matrix in HBM (memory quadratic in sequence length), FlashAttention fuses the entire attention computation into a single kernel that works in fast SRAM, recomputing scores during the backward pass. This achieves both memory savings and improved speed simultaneously.
 
@@ -327,8 +327,8 @@ When training in FP16, many gradient values fall below the format's minimum (~$6
 4. Check for overflow (inf or NaN) - if detected, **skip the update** and reduce $S$.
 
 **Dynamic loss scaling** adaptively adjusts $S$ throughout training:
-- **Overflow detected** → skip update, reduce $S$ by factor of 2.
-- **N consecutive successful steps** → increase $S$ by a constant factor, recovering range utilization.
+- **Overflow detected** -> skip update, reduce $S$ by factor of 2.
+- **N consecutive successful steps** -> increase $S$ by a constant factor, recovering range utilization.
 
 This automatically accommodates changing gradient magnitudes: early training with large gradients uses a smaller $S$; late training with small gradients uses a larger $S$.
 
@@ -367,9 +367,9 @@ Tracking key metrics throughout training provides early warning of problems befo
 
 | Metric | What it indicates |
 |---|---|
-| Gradient norm | Values frequently at clip threshold → potential instability |
-| Training loss | Sudden increases → gradient spikes or data issues |
-| Parameter norm | Unexpected growth → optimization diverging |
+| Gradient norm | Values frequently at clip threshold -> potential instability |
+| Training loss | Sudden increases -> gradient spikes or data issues |
+| Parameter norm | Unexpected growth -> optimization diverging |
 | Learning rate | Confirm schedule is applying correctly |
 
 Automated systems can detect anomalies and automatically reduce learning rates, skip problematic batches, or revert to previous checkpoints when instability emerges.
