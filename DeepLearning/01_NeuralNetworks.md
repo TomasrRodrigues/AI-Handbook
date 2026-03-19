@@ -378,7 +378,7 @@ A professional training setup involves much more than just a training loop. It r
 
 ## Applications and Case Studies
 
-Neural networks have transitioned from theoretical mathematical constructs to the literal "brain" behind modern technology. By tailoring architectures to specific types of data—pixels for images, sequences for text, or graphs for molecules - AI now achieves or exceeds human-level performance in diverse fields.
+Neural networks have transitioned from theoretical mathematical constructs to the literal "brain" behind modern technology. By tailoring architectures to specific types of data - pixels for images, sequences for text, or graphs for molecules - AI now achieves or exceeds human-level performance in diverse fields.
 
 ### Computer Vision
 
