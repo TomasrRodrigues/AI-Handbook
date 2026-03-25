@@ -50,7 +50,7 @@ $$
 (I \otimes K)[i, j] = \sum_{m,n} I[i + m,\, j + n]\, K[m, n]
 $$
 
-Because the kernel's weights are learned anyway, the "flip" doesn't matter—the network will simply learn the flipped version if it needs to.
+Because the kernel's weights are learned anyway, the "flip" doesn't matter - the network will simply learn the flipped version if it needs to.
 
 ### Fundamental Properties of Convolution
 
@@ -106,11 +106,11 @@ The connection between convolution and the Fourier transform provides the "spect
 
 ### Convolution as a Linear Operator
 
-If you look at convolution through the lens of linear algebra, a convolutional layer is just a **matrix multiplication** where the matrix is highly structured (specifically, a **Toeplitz matrix**). This structure is what enforces "weight sharing"—using the same small set of numbers across the entire image rather than having a unique weight for every single pixel.
+If you look at convolution through the lens of linear algebra, a convolutional layer is just a **matrix multiplication** where the matrix is highly structured (specifically, a **Toeplitz matrix**). This structure is what enforces "weight sharing" - using the same small set of numbers across the entire image rather than having a unique weight for every single pixel.
 
 ## Translation Equivariance and Invariance
 
-In the context of computer vision, we often use the terms "equivariance" and "invariance" interchangeably, but they describe two very different—and equally necessary—mathematical behaviors.
+In the context of computer vision, we often use the terms "equivariance" and "invariance" interchangeably, but they describe two very different - and equally necessary - mathematical behaviors.
 
 As we established, **convolution is equivariant**. If you shift the input, the output shifts. From a **Group Theory** perspective, this is a formal symmetry. If $G$ is a group (like translations) acting on an image, a convolutional layer $\Phi$ ensures that shifting the image and then processing it is exactly the same as processing it and then shifting the result.
 
@@ -118,7 +118,7 @@ A key theorem by Kondor & Trivedi (2018) proves that convolution isn't just a go
 
 > ***Theorem.** For the translation group $\mathbb{R}^d$ acting on $L^2(\mathbb{R}^d)$, every continuous linear translation-equivariant map is a convolution operator.*
 
-This theorem shows that convolution isn't just a good way to handle translations—it is essentially the **only** linear way. If you want a linear layer that respects spatial shifts, you are mathematically forced to use convolution.
+This theorem shows that convolution isn't just a good way to handle translations - it is essentially the **only** linear way. If you want a linear layer that respects spatial shifts, you are mathematically forced to use convolution.
 
 ### From Equivariance to Invariance
 
@@ -151,7 +151,7 @@ $$
 
 where $\|\nabla\tau\|_\infty = \sup_x \|D\tau(x) - I\|$ measures the deformation magnitude.
 
-Theoretical work by Mallat (2012) on "Scattering Networks" showed that deep networks are mathematically better at handling these distortions. As you go deeper ($L$ layers), the network becomes exponentially better at ignoring small "warps" in the image. This explains why deep CNNs can recognize a face even when it's making a strange expression or viewed from a weird angle—the depth acts as a smoothing filter for the geometry of the world.
+Theoretical work by Mallat (2012) on "Scattering Networks" showed that deep networks are mathematically better at handling these distortions. As you go deeper ($L$ layers), the network becomes exponentially better at ignoring small "warps" in the image. This explains why deep CNNs can recognize a face even when it's making a strange expression or viewed from a weird angle - the depth acts as a smoothing filter for the geometry of the world.
 
 ## Convolutional Layer
 
@@ -186,7 +186,7 @@ To appreciate the power of convolution, we must look at its two guiding constrai
 **Receptive Fields (The "Zoom Out" Effect)**:  A single 3x3 filter only sees 9 pixels. How does a CNN eventually recognize a whole "Dog"? Through the **Hierarchical Receptive Field**.
 - **Layer 1**: Neurons see 3x3 pixels. They detect simple edges.
 - **Layer 2**: Neurons look at the outputs of Layer 1. Because those Layer 1 neurons already "cover" a 3x3 area, a Layer 2 neuron looking at a 3x3 patch of them actually sees a 5x5 area of the original image.
-- **Deep Layers**: By the time you reach Layer 50, a single neuron might have a **Receptive Field** of 200x200 pixels—enough to see the entire face of the dog.
+- **Deep Layers**: By the time you reach Layer 50, a single neuron might have a **Receptive Field** of 200x200 pixels - enough to see the entire face of the dog.
 
 
 ### Padding Strategies
@@ -221,7 +221,7 @@ $$
 Exponentially increasing dilation ($r_\ell = 2^{\ell-1}$) gives $\text{RF} = 1 + (k-1)(2^L - 1)$ - exponential growth in depth without any additional parameters. Dilated convolution is particularly useful for semantic segmentation (capturing multi-scale context), speech synthesis (WaveNet uses dilated 1D convolutions), and time series modeling (efficiently capturing long-range dependencies).
 
 
-**The Hardware Trick**: In reality, computers don't "slide" windows—that's slow. Instead, we use a trick called **im2col** (image to column). We unroll the local patches of the image into a large matrix and turn the convolution into a single, massive **Matrix Multiplication**. This is why CNNs are so blazingly fast on GPUs.
+**The Hardware Trick**: In reality, computers don't "slide" windows - that's slow. Instead, we use a trick called **im2col** (image to column). We unroll the local patches of the image into a large matrix and turn the convolution into a single, massive **Matrix Multiplication**. This is why CNNs are so blazingly fast on GPUs.
 
 
 ## Pooling Operations
@@ -294,7 +294,7 @@ While pooling is still great for a "local invariance" boost, strided convolution
 
 ## Activation Functions in CNNs
 
-In a CNN, the convolutional and pooling layers do the heavy lifting of feature extraction, but **activation functions** are what allow the model to learn complex, non-linear relationships. Without them, a neural network is just a giant linear regression model—no matter how many layers you stack.
+In a CNN, the convolutional and pooling layers do the heavy lifting of feature extraction, but **activation functions** are what allow the model to learn complex, non-linear relationships. Without them, a neural network is just a giant linear regression model - no matter how many layers you stack.
 
 ### The Necessity of Nonlinearity
 
@@ -377,12 +377,12 @@ In the first layer, a neuron's RF is just the filter size (e.g., $3 \times 3$). 
 
 Strides and pooling layers act as "accelerators" for the RF. While a $3 \times 3$ conv with stride 1 only adds 2 pixels to the RF width, a stride of 2 doubles the impact of all subsequent layers.
 
-**The "Effective" Receptive Field (ERF)**: Paradoxically, neurons don't pay equal attention to everything in their theoretical RF. Research shows that the **Effective Receptive Field**—the area that actually drives the neuron—is much smaller and shaped like a Gaussian (a bell curve). The center of the RF has a massive influence, while the edges are mostly ignored. This is why extremely deep networks (like ResNet-101) are necessary to actually "perceive" large objects in high-resolution images.
+**The "Effective" Receptive Field (ERF)**: Paradoxically, neurons don't pay equal attention to everything in their theoretical RF. Research shows that the **Effective Receptive Field** - the area that actually drives the neuron - is much smaller and shaped like a Gaussian (a bell curve). The center of the RF has a massive influence, while the edges are mostly ignored. This is why extremely deep networks (like ResNet-101) are necessary to actually "perceive" large objects in high-resolution images.
 
 ### Hierarchical Feature Representation
 
 CNNs learn to see the world exactly like the human brain: by starting with the simple and building toward the complex. This is known as **Compositional Generalization**.
-- **Low-Level (Layer 1-2)**: Detects "Gabor filters"—simple edges, color blobs, and orientations.
+- **Low-Level (Layer 1-2)**: Detects "Gabor filters" - simple edges, color blobs, and orientations.
 - **Mid-Level (Layer 3)**: Combines edges into textures, junctions, and simple repeating patterns (like honeycomb or stripes).
 - **High-Level (Layer 4-5)**: Detects semantically meaningful "parts," such as a dog's ear, a car wheel, or a bird's beak.
 - **Top-Level (Final Layers)**: Recognizes full objects and complex scenes.
@@ -473,7 +473,7 @@ Why do CNNs work? We have the engineering down to a science, but the "Why" leads
 ### Universal Approximation for CNNs
 
 Just like standard neural networks, CNNs are **Universal Approximators**. This means that for any continuous function (like "recognizing a car"), there exists a CNN that can approximate it with near-perfect accuracy.
-- **The Depth Advantage**: While a shallow, single-layer network could theoretically learn anything, it would need an exponential number of neurons (width). CNNs prove that Depth is a shortcut. By stacking layers, we can approximate complex functions using far fewer parameters—an "exponential advantage" of depth over width.
+- **The Depth Advantage**: While a shallow, single-layer network could theoretically learn anything, it would need an exponential number of neurons (width). CNNs prove that Depth is a shortcut. By stacking layers, we can approximate complex functions using far fewer parameters - an "exponential advantage" of depth over width.
 
 ### Optimization Landscape Analysis
 
@@ -491,13 +491,13 @@ Du et al. (2019) formalized this for overparameterized networks:
 
 What happens if we make a CNN infinitely wide? Paradoxically, the math gets simpler. In this "Infinite Width" regime, the network behaves like a linear model with a fixed **Neural Tangent Kernel (NTK)**.
 
-The catch is that while NTK theory allows us to prove that networks are trainable, it doesn't perfectly describe real-world CNNs. Real networks exhibit **Feature Learning**—the filters actually change and adapt to the data. In the infinite "lazy" regime, weights barely move. The gap between NTK theory and real performance is where the "magic" of deep representation learning lives.
+The catch is that while NTK theory allows us to prove that networks are trainable, it doesn't perfectly describe real-world CNNs. Real networks exhibit **Feature Learning** - the filters actually change and adapt to the data. In the infinite "lazy" regime, weights barely move. The gap between NTK theory and real performance is where the "magic" of deep representation learning lives.
 
 ### Implicit Regularization
 
 Even if you don't use $L_2$ regularization or Dropout, Gradient Descent itself is "prejudiced" toward simple solutions. This is known as **Implicit Regularization**.
 - **Max-Margin Bias**: For classification, Gradient Descent naturally tries to push the decision boundary as far away from the data points as possible, acting like a Support Vector Machine (SVM) without being told to.
-- **Low-Rank Filters**: As CNNs train, the filters naturally become "simple" or low-rank. They don't use their full mathematical capacity; instead, they focus on a few dominant patterns. This is why a model with 50 million parameters can generalize so well from only 1 million images—it's not actually using all its "brain power" to memorize the noise.
+- **Low-Rank Filters**: As CNNs train, the filters naturally become "simple" or low-rank. They don't use their full mathematical capacity; instead, they focus on a few dominant patterns. This is why a model with 50 million parameters can generalize so well from only 1 million images - it's not actually using all its "brain power" to memorize the noise.
 
 
 ## Adversarial Robustness and Stability
@@ -554,11 +554,11 @@ $$g(x, y) = \exp\!\left(-\frac{x'^2 + \gamma^2 y'^2}{2\sigma^2}\right) \cos\!\le
 Gabor filters are the "gold standard" because they are mathematically optimal at balancing spatial and frequency information. While classical methods used these fixed templates, CNNs **learn** them.
 - **Layer 1**: Discovers oriented edge detectors (the Gabor filters).
 - **Layers 2-3**: Evolves into texture detectors that go far beyond what static wavelets can capture.
-- **Layers 4+**: Transitions into "semantic filters" that recognize specific object parts—a feat classical signal processing could never quite master.
+- **Layers 4+**: Transitions into "semantic filters" that recognize specific object parts - a feat classical signal processing could never quite master.
 
 ### Sampling Theory and CNN Architectures
 
-According to the **Nyquist-Shannon sampling theorem**, if you want to shrink a signal (downsample it) without losing its identity, you have to sample it at a specific rate. If you don't, you get aliasing—where high-frequency detail turns into weird, low-frequency artifacts.
+According to the **Nyquist-Shannon sampling theorem**, if you want to shrink a signal (downsample it) without losing its identity, you have to sample it at a specific rate. If you don't, you get aliasing - where high-frequency detail turns into weird, low-frequency artifacts.
 
 In CNNs, **Max Pooling** is a major culprit for aliasing. By jumping over pixels (striding) without "smoothing" them first, we create artifacts that hurt the model's consistency.
 
@@ -566,7 +566,7 @@ In CNNs, **Max Pooling** is a major culprit for aliasing. By jumping over pixels
 
 ### Compressed Sensing and Sparse CNNs
 
-**Compressed Sensing** tells us we can reconstruct a signal using very few measurements if the signal is "sparse." In the CNN world, this leads us to **Pruning**—the art of deleting 90% of a model's weights without losing accuracy.
+**Compressed Sensing** tells us we can reconstruct a signal using very few measurements if the signal is "sparse." In the CNN world, this leads us to **Pruning** - the art of deleting 90% of a model's weights without losing accuracy.
 
 This is formalized by the **Lottery Ticket Hypothesis**:
 > Inside every large, dense network, there is a small "winning ticket" subnetwork that could have been trained just as effectively on its own.
@@ -579,19 +579,19 @@ A **frame** is like a mathematical "safety net." Unlike a rigid coordinate syste
 
 $$A\|f\|^2 \leq \sum_i |\langle f, \phi_i \rangle|^2 \leq B\|f\|^2$$
 
-CNN feature maps act as frames. The redundancy (having more features than strictly necessary) is what makes the network stable. If one neuron misses a feature, five others are there to catch it. This redundancy is also what allows us to "reconstruct" what a CNN is seeing during visualization—we can literally "invert" the frame to see the features the network has prioritized.
+CNN feature maps act as frames. The redundancy (having more features than strictly necessary) is what makes the network stable. If one neuron misses a feature, five others are there to catch it. This redundancy is also what allows us to "reconstruct" what a CNN is seeing during visualization - we can literally "invert" the frame to see the features the network has prioritized.
 
 ### Harmonic Analysis on Groups
 
 Standard CNNs are built for flat, 2D translations. But what if your data lives on a sphere (like 360-degree video) or a complex 3D molecule?
 
-**Group-equivariant CNNs** use the math of **Harmonic Analysis** to ensure that symmetries—like rotation—are built directly into the architecture. **Spherical CNNs** use **Spherical Harmonics** (the same math used in quantum mechanics and climate modeling) as their filters. This ensures the model treats a "top-down" view and a "sideways" view as the same object, which is essential for omnidirectional vision and scientific computing.
+**Group-equivariant CNNs** use the math of **Harmonic Analysis** to ensure that symmetries - like rotation - are built directly into the architecture. **Spherical CNNs** use **Spherical Harmonics** (the same math used in quantum mechanics and climate modeling) as their filters. This ensures the model treats a "top-down" view and a "sideways" view as the same object, which is essential for omnidirectional vision and scientific computing.
 
 
 
 ## Conclusion
 
-Convolutional Neural Networks aren't just a popular engineering choice; they represent one of the most successful marriages between biological inspiration and rigorous mathematics in the history of AI. By bridging disciplines—from harmonic analysis and signal processing to approximation theory—CNNs have provided a structured way to make sense of the high-dimensional "chaos" of visual data.
+Convolutional Neural Networks aren't just a popular engineering choice; they represent one of the most successful marriages between biological inspiration and rigorous mathematics in the history of AI. By bridging disciplines - from harmonic analysis and signal processing to approximation theory - CNNs have provided a structured way to make sense of the high-dimensional "chaos" of visual data.
 
 
 The "magic" of CNNs is actually a collection of well-defined mathematical symmetries and optimizations:
@@ -602,7 +602,7 @@ The "magic" of CNNs is actually a collection of well-defined mathematical symmet
 
 If there is one "Grand Unified Theory" for why CNNs work so well, it is this:
 
-> ***The architectural constraints of a CNN—local connectivity, parameter sharing, and hierarchical composition—are perfectly aligned with the structure of the natural world.***
+> ***The architectural constraints of a CNN - local connectivity, parameter sharing, and hierarchical composition - are perfectly aligned with the structure of the natural world.***
 
 Natural images are **locally correlated** (pixels near each other matter), **compositionally organized** (parts make wholes), and **invariant** to minor changes. CNNs succeed because they don't try to learn vision from a blank slate; they are "pre-wired" with the right assumptions about how light and objects behave.
 

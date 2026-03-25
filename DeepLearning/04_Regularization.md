@@ -126,8 +126,8 @@ $$\ell_{L_1}(w) = \ell(w) + \lambda\|w\|_1$$
 
 Real-world data often presents a middle ground where neither $L_1$ nor $L_2$ is perfect.
 - **Elastic Net**: This hybrid combines both penalties. It is particularly useful for datasets with groups of highly correlated features. While Lasso might arbitrarily pick one feature from a group and ignore the rest, Elastic Net encourages the whole group to stay together.
-- **Group Lasso**: This allows you to zero out entire **blocks** of related features simultaneously—such as all indicators for a single categorical variable or all pixels in a specific region of an image.
-- **Nuclear Norm & Spectral Norm**: For matrices, the **Nuclear Norm** encourages a low-rank structure (central to recommendation systems), while **Spectral Normalization** ensures mathematical stability by bounding the maximum amplification (Lipschitz constant) of a layer—the secret to stable GANs.
+- **Group Lasso**: This allows you to zero out entire **blocks** of related features simultaneously - such as all indicators for a single categorical variable or all pixels in a specific region of an image.
+- **Nuclear Norm & Spectral Norm**: For matrices, the **Nuclear Norm** encourages a low-rank structure (central to recommendation systems), while **Spectral Normalization** ensures mathematical stability by bounding the maximum amplification (Lipschitz constant) of a layer - the secret to stable GANs.
 
 ## The Bias-Variance Decomposition
 
@@ -141,13 +141,13 @@ $$\mathbb{E}_S\left[(\hat{f}_S(x) - y)^2\right] = \text{Bias}^2 + \text{Variance
 
 > TODO: [The "Bulls-eye" diagram. Four targets showing High/Low Bias and High/Low Variance.]
 
-- **Bias ($\text{Bias}^2$)**: This represents the error from overly simple assumptions. If you try to fit a straight line to a curved relationship, your model has high bias—it consistently misses the target because it is too rigid.
+- **Bias ($\text{Bias}^2$)**: This represents the error from overly simple assumptions. If you try to fit a straight line to a curved relationship, your model has high bias - it consistently misses the target because it is too rigid.
 - **Variance**: This represents the error from being too sensitive to the specific training set. If your model is so flexible that it "memorizes" the random fluctuations of the data, it will vary wildly if trained on a different set of samples.
 - **Irreducible Noise ($\sigma^2$)**: The inherent noise in the data generating process that no model, no matter how perfect, can ever capture.
 
 **Regularization is the knob we turn to slide along this error curve**. By adding an $L_2$ penalty, we intentionally introduce a small amount of **Bias** (forcing the model to be simpler) in exchange for a massive reduction in **Variance**. We trade the ability to perfectly fit every training point for the ability to accurately predict new, unseen examples.
 
-> ***Classical theory predicts that as models get bigger (overparameterized), variance should explode and generalization should fail. However, deep learning frequently violates this, leading to the theory of double descent—where error goes down again even after the model becomes massive.***
+> ***Classical theory predicts that as models get bigger (overparameterized), variance should explode and generalization should fail. However, deep learning frequently violates this, leading to the theory of double descent - where error goes down again even after the model becomes massive.***
 
 ### Bagging and Variance Reduction
 
@@ -159,7 +159,7 @@ Bagging is most effective for models that are "unstable" and prone to high varia
 
 ## Dropout
 
-Dropout is perhaps the most famous regularization technique in the deep learning era. It provides a simple yet incredibly effective way to prevent neurons from "co-adapting"—a situation where certain neurons only work well in the presence of specific other neurons, leading to a brittle model.
+Dropout is perhaps the most famous regularization technique in the deep learning era. It provides a simple yet incredibly effective way to prevent neurons from "co-adapting" - a situation where certain neurons only work well in the presence of specific other neurons, leading to a brittle model.
 
 During training, dropout randomly "drops" (zeroes out) a fraction $p$ of the activations in a layer for each forward pass. For every mini-batch, the network architecture changes slightly as random nodes are removed. This forces every neuron to learn robust features that are useful on their own, rather than relying on a few specific neighbors. 
 
@@ -205,12 +205,12 @@ where $\mu_\mathcal{B}$, $\sigma^2_\mathcal{B}$ are batch mean and variance, $\v
 
 The community's understanding of BN has evolved since its introduction:
 - **Smoothing the Landscape**: Research (Santurkar et al., 2018) suggests that BN's real "superpower" isn't just fixing internal distributions, but making the **loss landscape much smoother**. It prevents the "jagged" gradients that usually cause training to crash, allowing you to use much higher learning rates.
-- **Injecting Useful Noise**: Because the batch statistics ($\mu$ and $\sigma$) fluctuate slightly from one mini-batch to the next, BN adds a small amount of "noise" to the activations. This acts as a regularizer—much like Dropout—and often reduces the need for other explicit penalties.
+- **Injecting Useful Noise**: Because the batch statistics ($\mu$ and $\sigma$) fluctuate slightly from one mini-batch to the next, BN adds a small amount of "noise" to the activations. This acts as a regularizer - much like Dropout - and often reduces the need for other explicit penalties.
 - **Implicit Preconditioning**: It effectively "rounds out" the error bowl, making gradient descent steps more accurate and preventing the model from getting stuck in long, narrow ravines.
 
 ### Key Normalization Variants
 
-Not every model can use Batch Normalization effectively—specifically those with very small batches or sequences of varying lengths.
+Not every model can use Batch Normalization effectively - specifically those with very small batches or sequences of varying lengths.
 - **Layer Normalization (LN)**: Instead of normalizing across the batch, it normalizes across the **features** of a single example. This is the gold standard for Transformers and RNNs, as it doesn't care about batch size.
 - **Group Normalization (GN)**: A middle ground that divides channels into groups and normalizes within them. It is highly effective for tasks like object detection where batch sizes are often very small (e.g., 1 or 2).
 - **Instance Normalization**: Normalizes each channel of each image individually. It is frequently used in **Style Transfer** because it helps strip away the "style" (the global contrast/color) while keeping the content.
@@ -219,7 +219,7 @@ Not every model can use Batch Normalization effectively—specifically those wit
 
 ## Implicit Regularization in Gradient Descent
 
-One of the most profound discoveries in modern deep learning is that our optimization algorithms are "secretly" regularizing our models. Even without adding an $L_1$ or $L_2$ penalty, the act of using Gradient Descent—and especially its stochastic version (SGD)—biases the model toward simpler, more robust solutions.
+One of the most profound discoveries in modern deep learning is that our optimization algorithms are "secretly" regularizing our models. Even without adding an $L_1$ or $L_2$ penalty, the act of using Gradient Descent - and especially its stochastic version (SGD) - biases the model toward simpler, more robust solutions.
 
 ### The Implicit Bias Phenomenon
 
@@ -251,7 +251,7 @@ In classification tasks, Gradient Descent naturally behaves like a **Support Vec
 
 ## Early Stopping as Regularization
 
-"Quitting while you're ahead" isn't just a life lesson—in deep learning, it is a mathematically sound regularization strategy. **Early stopping** involves monitoring the model's performance on a validation set and halting training the moment the validation error stops improving, even if the training error is still falling.
+"Quitting while you're ahead" isn't just a life lesson - in deep learning, it is a mathematically sound regularization strategy. **Early stopping** involves monitoring the model's performance on a validation set and halting training the moment the validation error stops improving, even if the training error is still falling.
 
 While it looks like a simple heuristic, early stopping has a deep connection to classical regularization. For linear models, training for $t$ steps is mathematically equivalent to $L_2$ regularization (Tikhonov regularization) with a penalty $\lambda \approx 1/(\eta t)$.
 - **Time is the Penalty**: Stopping early (small $t$) is like having a very large $\lambda$ (strong regularization). As you continue training, the "effective" regularization weakens.
@@ -284,7 +284,7 @@ Standard augmentation (flipping, cropping) is great, but modern deep learning us
 
 > TODO: [What: A grid showing a original image (e.g., a cat) and its variants: Mixup (blended), Cutout (black square), and CutMix (patch from another image).]
 
-Choosing the right augmentations (how much rotation? how much brightness?) used to be a matter of tedious trial and error. **AutoAugment** changed this by using Reinforcement Learning to "search" for the best augmentation policy for a specific dataset. It often discovers bizarre combinations—like specific color distortions paired with extreme shearing—that a human designer would never think of, but that result in much higher accuracy.
+Choosing the right augmentations (how much rotation? how much brightness?) used to be a matter of tedious trial and error. **AutoAugment** changed this by using Reinforcement Learning to "search" for the best augmentation policy for a specific dataset. It often discovers bizarre combinations - like specific color distortions paired with extreme shearing - that a human designer would never think of, but that result in much higher accuracy.
 
 ## Modern Regularization Techniques
 
@@ -342,7 +342,7 @@ There is a profound mathematical link between how much a model can compress a da
 
 Theoretically, if you can compress your data into $k$ bits, your error on new data ($R(h)$) is bound by your training error ($\hat{R}(h)$) plus a factor of $\sqrt{k/n}$.
 
-This explains why **Pruning** (deleting 90% of a model's weights) or **Quantization** (using lower-precision numbers) often doesn't hurt accuracy—and can even improve it. You are forcing the model to find the most efficient "summary" of the truth.
+This explains why **Pruning** (deleting 90% of a model's weights) or **Quantization** (using lower-precision numbers) often doesn't hurt accuracy - and can even improve it. You are forcing the model to find the most efficient "summary" of the truth.
 
 ### Mutual Information and PAC-Bayes
 
@@ -359,7 +359,7 @@ The **PAC-Bayes Theorem** provides some of the tightest known guarantees for why
 $$R(Q) \le \hat{R}(Q) + \sqrt{\frac{\mathrm{KL}(Q\|P) + \dots}{2n}}$$
 
 - **The KL Penalty**: The formula penalizes the difference (KL Divergence) between the final model ($Q$) and the initial, "uninformed" model ($P$).
-- **Initialization as an Anchor**: In neural networks, this means staying relatively close to your starting weights ($w_0$) is a form of regularization. This explains why **Weight Decay** and **Early Stopping** are so effective—they prevent the model from wandering off into "convoluted" solutions that only exist to satisfy the training data.
+- **Initialization as an Anchor**: In neural networks, this means staying relatively close to your starting weights ($w_0$) is a form of regularization. This explains why **Weight Decay** and **Early Stopping** are so effective - they prevent the model from wandering off into "convoluted" solutions that only exist to satisfy the training data.
 
 ## PAC Learning and Generalization Bounds
 
@@ -369,12 +369,12 @@ If Information Theory is the blueprint, then **Generalization Bounds** are the s
 
 The **VC (Vapnik-Chervonenkis) Dimension** measures the raw capacity of a model. It asks: *What is the largest number of data points this model can "shatter"?* **Shattering**: A model "shatters" a set of points if it can perfectly separate them no matter how you label them (e.g., any combination of Red/Blue).
 - **The Rule**: For a simple linear classifier in a 2D space, the VC dimension is 3. If you have 4 points, there's a labeling a single line can't solve.
-- **The Paradox**: Classical theory says that if your VC Dimension is much larger than your number of data points ($n$), you will overfit. Modern neural networks have a VC Dimension in the millions but only train on thousands of images—yet they still work. This "failure" of VC theory is what led to more modern measures.
+- **The Paradox**: Classical theory says that if your VC Dimension is much larger than your number of data points ($n$), you will overfit. Modern neural networks have a VC Dimension in the millions but only train on thousands of images - yet they still work. This "failure" of VC theory is what led to more modern measures.
 
 ### Rademacher Complexity
 
 **Rademacher Complexity** is a more modern, "data-dependent" way to measure model flexibility. Instead of looking at the maximum possible power (like VC), it looks at how well the model can fit **random noise**.
-- **The Logic**: If you give a model a dataset where the labels are just random coin flips (+1 or -1) and the model can still "predict" them perfectly, that model is dangerous—it's too flexible and will likely overfit.
+- **The Logic**: If you give a model a dataset where the labels are just random coin flips (+1 or -1) and the model can still "predict" them perfectly, that model is dangerous - it's too flexible and will likely overfit.
 - **Measuring Learning**: A "good" model should be able to fit real patterns but struggle to fit pure noise.
 - **The Bound**: We can mathematically prove that your error on new data ($R(h)$) is capped by your training error plus the Rademacher Complexity.
 
@@ -391,13 +391,13 @@ For decades, the "golden rule" of statistics was simple: a model with too many p
 ### The Double Descent Phenomenon
 
 The **Double Descent** curve shows that as you increase model complexity, the test error behaves in a surprising, non-monotonic way:
-1. **The Classical Regime**: Error follows the standard U-curve—decreasing as the model learns, then rising as it starts to overfit.
+1. **The Classical Regime**: Error follows the standard U-curve - decreasing as the model learns, then rising as it starts to overfit.
 2. **The Interpolation Threshold ($p \approx n$)**: When the number of parameters ($p$) roughly equals the number of data points ($n$), the model is just barely large enough to "memorize" the training set. At this specific point, test error **peaks sharply**. The model becomes incredibly fragile because it is forced to "wiggle" violently to hit every data point exactly.
 3. **The Modern Regime ($p \gg n$)**: As you continue to add parameters, the error **falls again**, often dropping below the classical minimum. This is the overparameterized regime where modern LLMs and Vision models live.
 
 > TODO: [The "Modern" U-curve. It shows the error going down, then up (interpolation peak), then down again into the "overparameterized" valley.]
 
-The secret lies in the **minimum norm interpolator**. When a model is massive, there are millions of ways it can fit the training data perfectly. Our optimizers (like SGD) are biased toward the "simplest" of these solutions—the one with the smallest weights.
+The secret lies in the **minimum norm interpolator**. When a model is massive, there are millions of ways it can fit the training data perfectly. Our optimizers (like SGD) are biased toward the "simplest" of these solutions - the one with the smallest weights.
 - **At the Threshold**: The model has no "room" to be smooth; it must use every bit of its capacity just to fit the data, leading to high-variance "spikes."
 - **In Overparameterization**: The extra parameters provide the "freedom" to spread the influence of the data across many weights. This naturally results in a smoother, more stable function that generalizes beautifully.
 
@@ -405,7 +405,7 @@ The secret lies in the **minimum norm interpolator**. When a model is massive, t
 
 We used to believe that hitting "zero training error" was a sign of disaster. **Benign Overfitting** proves that you can have a perfect fit on training data and still have a world-class model.
 
-This happens when the "noise" in the data is essentially "absorbed" by the vast number of extra parameters, while the core signal is captured by the dominant weights. For this to work, your data needs a "decaying eigenspectrum"—meaning most of the important information is concentrated in a few key directions, while the noise is scattered across the rest.
+This happens when the "noise" in the data is essentially "absorbed" by the vast number of extra parameters, while the core signal is captured by the dominant weights. For this to work, your data needs a "decaying eigenspectrum" - meaning most of the important information is concentrated in a few key directions, while the noise is scattered across the rest.
 
 > ***Double descent reveals that in overparameterized models, more capacity can improve generalization. The classical prescription - regularize to reduce capacity - is incomplete. Implicit regularization from optimization can dominate.***
 
@@ -423,7 +423,7 @@ In the world of massive models, regularization isn't just a penalty term you add
 
 There are two very different ways a large network can learn.
 - **Lazy Training (The NTK Regime)**: If a network is infinitely wide, the weights barely move from their starting positions. It acts like a simple mathematical "kernel" (the **Neural Tangent Kernel**). While this is easy to study mathematically, it’s not how the best models actually work.
-- **Feature Learning**: Real, high-performing networks move far from where they started. They don't just "fit" the data; they **reshape their internal representations** to find the most useful features. This active reshaping is a form of self-regularization—the model "decides" which features are worth keeping and which are noise.
+- **Feature Learning**: Real, high-performing networks move far from where they started. They don't just "fit" the data; they **reshape their internal representations** to find the most useful features. This active reshaping is a form of self-regularization - the model "decides" which features are worth keeping and which are noise.
 
 ### The Lottery Ticket Hypothesis
 
@@ -453,7 +453,7 @@ Regularization is one of the deepest and most enduring concepts in machine learn
 **Key Principles of Generalization**
 - **Inductive Bias is Mandatory**: Without assumptions about the data or the function class, generalization is mathematically impossible. Regularization is the primary language we use to speak these assumptions into our models.
 - **The Layered Effect**: In modern deep learning, regularization is rarely just one thing. It is a "stack" where explicit penalties ($L_2$, Dropout), architectural constraints (Convolutions, Residuals), and optimization dynamics (SGD noise, Batch Size) all act simultaneously.
-- **The Overparameterized Paradox**: We have moved past the classical fear of "too much capacity". **Double Descent** and **Benign Overfitting** prove that in the right regimes, massive models don't just memorize—they find smoother, more robust solutions than their smaller counterparts.
+- **The Overparameterized Paradox**: We have moved past the classical fear of "too much capacity". **Double Descent** and **Benign Overfitting** prove that in the right regimes, massive models don't just memorize - they find smoother, more robust solutions than their smaller counterparts.
 - **Optimization is Regularization**: The "how" of training is as important as the "what." Your choice of optimizer, learning rate schedule, and initialization determines which of the infinitely many possible solutions your model will settle into.
 
 As we push toward even larger models and more complex tasks like in-context learning and domain transfer, the theory of regularization must continue to evolve. The fundamental challenge remains the same: ensuring that a model doesn't just "remember" its past, but truly understands the patterns required to predict the future. Regularization remains the cornerstone of that bridge between memorization and intelligence.
