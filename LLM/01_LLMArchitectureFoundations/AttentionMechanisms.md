@@ -226,7 +226,7 @@ An important distinction exists between **self-attention** and **cross-attention
 
 In self-attention, the queries, keys and values all come from the **same source**. When a tranformer processes an input sentence, it uses self-attentionto allow each word to attend to every other word in that same sentence. This is what enables the model to capture dependencies and relationships within the input.
 
-**Example**: In the sentence "The cat sat on the mat," self-attention allows "sat" to attend to "cat" to understand the subject performing the action, and to "mat" to understand where the sitting occurred.
+**Example**: In the sentence "The cat sat on the mat ", self-attention allows "sat" to attend to "cat" to understand the subject performing the action, and to "mat" to understand where the sitting occurred.
 
 Cross-attention, by contrast, allows **one sequence to attend to a different sequence**. 
 

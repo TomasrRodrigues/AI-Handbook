@@ -30,10 +30,10 @@ The tokens we choose as our vocabulary directly determine what the model conside
 - If our tokens are **complete words**, the model can work directly with word-level meaning but struggles with rare or unknown words
 
 
-The question of how to tokenize text might seem to have an obvious answer: just split on spaces to separate words. This approach, called **word-level tokenization**, is intuitive and was used by many early natural language processing systems. For a sentence like $\text{"The cat sat on the mat."}$, word-level tokenization produces six word tokens plus punctuation:
+The question of how to tokenize text might seem to have an obvious answer: just split on spaces to separate words. This approach, called **word-level tokenization**, is intuitive and was used by many early natural language processing systems. For a sentence like $\text{"The cat sat on the mat ".}$, word-level tokenization produces six word tokens plus punctuation:
 
 $$
-\text{"The cat sat on the mat."} \quad \xrightarrow{Tokenization} \quad \text{["The","cat","sat","on","the","mat","."]}
+\text{"The cat sat on the mat ".} \quad \xrightarrow{Tokenization} \quad \text{["The" ",cat" ",sat" ",on" ",the" ",mat" ", ".]}
 $$
 
 This seems natural because it matches how we think about language - as sequence of words. However, this straightforward approach reveals significant problems when we examine it more closely.
@@ -66,7 +66,7 @@ The model must learn the relationships between these forms from scratch based on
 At the opposite extreme from word-level tokenization is **character-level tokenization**, where text is broken down into individual characters:
 
 $$
-\text{"CAT"} \quad \xrightarrow{Tokenization} \quad \text{["C","A","T"]}
+\text{"CAT"} \quad \xrightarrow{Tokenization} \quad \text{["C" ",A" ",T"]}
 $$
 
 This approach solves the **vocabulary size problem completely**. English only needs about 100 characters including uppercase and lowercase letters, digits, punctuation, and a few special characters. There's **no concept of an unknown word** because any word, no matter how rare or how it's spelled, can be represented as a sequence of known characters.
@@ -279,7 +279,7 @@ Choosing the right vocabulary size for a tokenizer involves balancing multiple c
 - Small enough that the vocabulary is manageable and most tokens appear frequently enough during training to learn good embeddings
 - **For multilingual models**: Vocabularies tend to be larger (100,000 to 250,000 tokens) to accommodate common words and patterns across many languages
 
-One fascinating challenge is handling languages that don't use spaces to separate words. In Chinese, sentences are written as continuous strings: "我喜欢学习自然语言处理" means "I like studying natural language processing," but there are no visual breaks between words.
+One fascinating challenge is handling languages that don't use spaces to separate words. In Chinese, sentences are written as continuous strings: "我喜欢学习自然语言处理" means "I like studying natural language processing ", but there are no visual breaks between words.
 
 Subword tokenization approaches like BPE handle this effectively when trained on sufficient Chinese text. The algorithm learns to merge frequently co-occurring characters, discovering common multi-character words. If "自然语言" (natural language) appears frequently, those characters merge together. The tokenizer discovers these patterns purely from frequency, yet the learned tokens often correspond to meaningful linguistic units.
 

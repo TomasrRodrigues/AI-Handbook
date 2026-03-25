@@ -22,7 +22,7 @@
 
 ## Introduction
 
-Sequential data is the heartbeat of the natural world. Unlike an image, which can be perceived as a static snapshot, sequential data - such as human language, financial market tickers, or a musical composition - unfolds over time. In these domains, the order of elements is as important as the elements themselves. A sentence like "The dog bit the man" has a fundamentally different meaning than "The man bit the dog," even though the vocabulary is identical.
+Sequential data is the heartbeat of the natural world. Unlike an image, which can be perceived as a static snapshot, sequential data - such as human language, financial market tickers, or a musical composition - unfolds over time. In these domains, the order of elements is as important as the elements themselves. A sentence like "The dog bit the man" has a fundamentally different meaning than "The man bit the dog ", even though the vocabulary is identical.
 
 Processing this "flow" presents four structural hurdles for traditional Artificial Intelligence:
 - **Temporal Dependencies**: The value at time $t$ is often a direct consequence of what happened at $t-1$.
@@ -30,12 +30,12 @@ Processing this "flow" presents four structural hurdles for traditional Artifici
 - **Causality**: In a real-time system, the future cannot influence the past. We must maintain a "running summary" of the past to predict what comes next.
 - **Long-Range Dependencies**: A pronoun like "she" at the end of a long paragraph might refer to a name introduced in the very first sentence.
 
-Standard **Feedforward Networks** fail here because they lack "state." They process each input in a vacuum, essentially suffering from total amnesia between every step. **Convolutional Neural Networks (CNNs)** can look at local "windows" of time using 1D filters, but they struggle to connect ideas that are far apart. This is why we need **Recurrent Neural Networks (RNNs)**.
+Standard **Feedforward Networks** fail here because they lack "state ". They process each input in a vacuum, essentially suffering from total amnesia between every step. **Convolutional Neural Networks (CNNs)** can look at local "windows" of time using 1D filters, but they struggle to connect ideas that are far apart. This is why we need **Recurrent Neural Networks (RNNs)**.
 
 ### Early History
 
 The idea that a network could "loop" back on itself isn't new; it dates back to the very origins of neural modeling.
-- **Hopfield Networks (1982)**: These were symmetric systems where every neuron was connected to every other. They acted as "associative memory," where the network would settle into a stable state (an attractor) that represented a stored pattern.
+- **Hopfield Networks (1982)**: These were symmetric systems where every neuron was connected to every other. They acted as "associative memory ", where the network would settle into a stable state (an attractor) that represented a stored pattern.
 - **Elman Networks (1990)**: Often called "Simple Recurrent Networks" (SRNs). Jeffrey Elman proposed adding a "context layer" that simply copied the hidden state from the previous time step and fed it back into the hidden layer at the current step.
 - **Jordan Networks (1986)**: Similar to Elman, but instead of the hidden state, it fed the output of the previous step back into the hidden layer.
 
@@ -45,13 +45,13 @@ $$h^{(t)} = \sigma(W_{hh} h^{(t-1)} + W_{xh} x^{(t)} + b_h)$$
 
 By using the same weight matrices ($W_{hh}$ and $W_{xh}$) at every step, the network could - in theory - process a sequence of any length using a fixed number of parameters.
 
-To train these "loops," we use a technique called **Backpropagation Through Time (BPTT)**. We mentally "unroll" the RNN. If a sequence has 10 steps, we treat it as a 10-layer feedforward network where each layer shares the exact same weights.
+To train these "loops ", we use a technique called **Backpropagation Through Time (BPTT)**. We mentally "unroll" the RNN. If a sequence has 10 steps, we treat it as a 10-layer feedforward network where each layer shares the exact same weights.
 
 We calculate the error at the end of the sequence and "flow" the gradient backward through all those time steps. However, this is where the math starts to break.
 
 ### The Vanishing Gradient Problem
 
-As analyzed rigorously by Sepp Hochreiter (1991) and Yoshua Bengio (1994), standard RNNs have a mathematical "event horizon." When you backpropagate through 100 time steps, you are essentially multiplying the same weight matrix ($W_{hh}$) 100 times.
+As analyzed rigorously by Sepp Hochreiter (1991) and Yoshua Bengio (1994), standard RNNs have a mathematical "event horizon ". When you backpropagate through 100 time steps, you are essentially multiplying the same weight matrix ($W_{hh}$) 100 times.
 
 If the eigenvalues of your weight matrix are slightly less than 1, the gradient shrinks exponentially until it reaches zero (**Vanishing**). If they are greater than 1, the gradient grows exponentially until it crashes the system (**Exploding**).
 
@@ -82,7 +82,7 @@ Around 2017, the **Transformer** architecture arrived, utilizing "Self-Attention
 
 > TODO: [Image comparing RNN sequential processing vs Transformer parallel processing]
 
-However, RNNs are not "dead." They remain essential in specific contexts:
+However, RNNs are not "dead ". They remain essential in specific contexts:
 - **Online Processing**: When you are processing a live stream of audio or sensor data, you don't have the "future" data yet. RNNs are native to this incremental processing.
 - **Inference Efficiency**: Generating text with an RNN requires constant time per step ($O(1)$), whereas standard Transformers require increasing time as the sequence grows ($O(T)$).
 - **Hybrid Models**: New research into **State Space Models (SSMs)** like **Mamba** is essentially a return to recurrent principles, but with the parallelizability of Transformers.
@@ -137,7 +137,7 @@ Depending on what we are trying to predict, the "Loss" ($\mathcal{L}$) is calcul
 
 ### Expressiveness
 
-RNNs are mathematically "complete." A famous theorem by **Siegelmann & Sontag (1995)** proved that an RNN with rational weights and sigmoid activations can simulate any **Turing Machine**.
+RNNs are mathematically "complete ". A famous theorem by **Siegelmann & Sontag (1995)** proved that an RNN with rational weights and sigmoid activations can simulate any **Turing Machine**.
 
 In theory, this means an RNN could learn to execute any computer program. In practice, however, our ability to learn these complex programs is limited by finite numerical precision and the difficulty of optimizing the weights.
 
@@ -145,7 +145,7 @@ In theory, this means an RNN could learn to execute any computer program. In pra
 
 We can view the hidden state $h^{(t)}$ as a point moving through a high-dimensional space.
 - **Fixed Points ($h^*$)**: These are states where the memory stops changing ($h^* = f(h^*)$).
-- **Stability**: If the eigenvalues of the Jacobian $\partial f / \partial h$ are less than 1, the system is stable - the memory "settles down." If they are greater than 1, the system can become chaotic, where tiny changes in the first word lead to massive changes in the final prediction.
+- **Stability**: If the eigenvalues of the Jacobian $\partial f / \partial h$ are less than 1, the system is stable - the memory "settles down ". If they are greater than 1, the system can become chaotic, where tiny changes in the first word lead to massive changes in the final prediction.
 
 ### Memory Capacity
 
@@ -161,7 +161,7 @@ In this section, we move from the abstract "loop" to the practical engineering d
 
 The choice of $\sigma$ in the state update $h^{(t)} = \sigma(W_{hh}\, h^{(t-1)} + W_{xh}\, x^{(t)} + b_h)$ is more than a preference; it dictates the stability of the entire dynamical system.
 - **Tanh**: The traditional choice. It squashes values into the range $(-1, 1)$, ensuring the hidden state doesn't explode in magnitude. Being zero-centered helps the optimization process stay balanced. However, its derivative saturates at both ends, contributing to the "vanishing gradient" problem.
-- **ReLU**: Increasingly popular in deep RNNs. It avoids saturation for positive values, keeping the gradient signal strong. The danger is that without a cap (like tanh's 1.0), the hidden state activations can grow unboundedly if $W_{hh}$ has large eigenvalues, leading to "exploding activations."
+- **ReLU**: Increasingly popular in deep RNNs. It avoids saturation for positive values, keeping the gradient signal strong. The danger is that without a cap (like tanh's 1.0), the hidden state activations can grow unboundedly if $W_{hh}$ has large eigenvalues, leading to "exploding activations ".
 
 ### Weight Initialization
 
@@ -257,16 +257,16 @@ $$J_t = \text{diag}(\tanh'(z^{(t)})) \cdot W_{hh}$$
 ### Norm Analysis
 
 The core of the issue is the **spectral properties** of $W_{hh}$. As established by Pascanu et al. (2013), the gradient's behavior depends on the largest singular value ($\lambda_{\max}$) of the weight matrix.
-- **Vanishing Gradients ($\lambda_{\max} < 1$)**: If the weights are "small," the product $\prod_{t=1}^T J_t$ decays exponentially. For $T = 100$ and a decay rate of $0.9$, the signal shrinks to $0.9^{100} \approx 0.000026$. The early time steps essentially become "invisible" to the optimizer.
-- **Exploding Gradients ($\lambda_{\max} > 1$)**: If the weights are "large," the gradient grows exponentially. This leads to **NaN** values, catastrophic updates where weights shoot to infinity, and total training divergence.
+- **Vanishing Gradients ($\lambda_{\max} < 1$)**: If the weights are "small ", the product $\prod_{t=1}^T J_t$ decays exponentially. For $T = 100$ and a decay rate of $0.9$, the signal shrinks to $0.9^{100} \approx 0.000026$. The early time steps essentially become "invisible" to the optimizer.
+- **Exploding Gradients ($\lambda_{\max} > 1$)**: If the weights are "large ", the gradient grows exponentially. This leads to **NaN** values, catastrophic updates where weights shoot to infinity, and total training divergence.
 
 ### The Fundamental Dilemma
 
-RNNs face a "Catch-22." To store information over long periods, the dynamics must be stable (eigenvalues near 1). But:
+RNNs face a "Catch-22 ". To store information over long periods, the dynamics must be stable (eigenvalues near 1). But:
 1. If eigenvalues are $< 1$, gradients vanish and the model can't learn long-term links.
 2. If eigenvalues are $> 1$, gradients explode and training becomes unstable.
 
-This balance is called the **"Edge of Chaos."** Bengio et al. (1994) proved that storing bits of information robustly over time requires the very conditions that make gradient-based learning fail.
+This balance is called the **"Edge of Chaos ".** Bengio et al. (1994) proved that storing bits of information robustly over time requires the very conditions that make gradient-based learning fail.
 
 ### Practical Countermeasures
 
@@ -292,7 +292,7 @@ Using **Identity Initialization** (setting $W_{hh} = I$) tells the network to "r
 
 ## Long Short-Term Memory (LSTM) Architecture
 
-In 1997, Sepp Hochreiter and Jürgen Schmidhuber solved the vanishing gradient problem by re-engineering the hidden state into the **Long Short-Term Memory (LSTM)**. If a vanilla RNN is a piece of paper that gets erased every time you write a new word, an LSTM is a sophisticated filing cabinet with a rigorous "retention policy."
+In 1997, Sepp Hochreiter and Jürgen Schmidhuber solved the vanishing gradient problem by re-engineering the hidden state into the **Long Short-Term Memory (LSTM)**. If a vanilla RNN is a piece of paper that gets erased every time you write a new word, an LSTM is a sophisticated filing cabinet with a rigorous "retention policy ".
 
 ### The Cell State
 
@@ -345,7 +345,7 @@ In 2014, Kyunghyun Cho and his team introduced the **Gated Recurrent Unit (GRU)*
 
 ### GRU Architecture
 
-The core innovation of the GRU is the removal of the separate "cell state." Instead, it uses a single hidden state $h^{(t)}$ and only **two gates**: the **Reset Gate** ($r^{(t)}$) and the **Update Gate** ($z^{(t)}$).
+The core innovation of the GRU is the removal of the separate "cell state ". Instead, it uses a single hidden state $h^{(t)}$ and only **two gates**: the **Reset Gate** ($r^{(t)}$) and the **Update Gate** ($z^{(t)}$).
 
 **The Mathematical Update**:
 
@@ -378,7 +378,7 @@ Extensive empirical studies (Greff et al., 2017) have yielded a somewhat surpris
 
 As researchers sought even more efficiency, several "ultra-light" variants emerged:
 - **Minimal Gated Unit (MGU)**: Simplifies the GRU even further into a **single gate** (a forget gate). It halves the parameter count of a GRU while remaining remarkably competitive on standard language tasks.
-- **Nested LSTMs**: Instead of a flat cell state, it uses "cells within cells." This allows the network to maintain memory across vastly different timescales - one cell tracks the "sentence" while the inner cell tracks the "word."
+- **Nested LSTMs**: Instead of a flat cell state, it uses "cells within cells ". This allows the network to maintain memory across vastly different timescales - one cell tracks the "sentence" while the inner cell tracks the "word ".
 - **IndRNN (Independently Recurrent RNNs)**: These replace the complex recurrent matrix $W_{hh}$ with a **diagonal matrix**. This means neurons don't talk to each other within a layer, they only talk to themselves over time. This drastically reduces the risk of exploding gradients and makes the model very easy to interpret.
 
 
@@ -392,7 +392,7 @@ Just as feedforward networks can approximate any static function, RNNs can appro
 
 > **Theorem (Schäfer & Zimmermann, 2007)**. For any continuous sequence-to-sequence map $F$ and any margin of error $\varepsilon > 0$, there exists an RNN with a sufficient number of hidden units that can approximate that map.
 
-**The Intuition**: Imagine an extremely complex transformation of a sentence. This theorem guarantees that an RNN can "mimic" that transformation by partitioning the input space into tiny "buckets" and learning a specific hidden state behavior for each bucket. While the proof is non-constructive (it doesn't tell us how many neurons we need), it establishes that the RNN architecture has no inherent "blind spots."
+**The Intuition**: Imagine an extremely complex transformation of a sentence. This theorem guarantees that an RNN can "mimic" that transformation by partitioning the input space into tiny "buckets" and learning a specific hidden state behavior for each bucket. While the proof is non-constructive (it doesn't tell us how many neurons we need), it establishes that the RNN architecture has no inherent "blind spots ".
 
 ### Approximation Rates
 
@@ -411,7 +411,7 @@ A common debate in the community was whether LSTMs were just easier to train, or
 ### Connection to Finite Automata and Formal Languages
 
 In computer science, we categorize the "difficulty" of languages using the **Chomsky Hierarchy**. RNNs map surprisingly well onto these levels:
-1. **Regular Languages (DFAs)**: Any standard RNN with even a single hidden unit can simulate a **Deterministic Finite Automaton**. It can learn simple rules like "accept strings with an even number of zeros."
+1. **Regular Languages (DFAs)**: Any standard RNN with even a single hidden unit can simulate a **Deterministic Finite Automaton**. It can learn simple rules like "accept strings with an even number of zeros ".
 2. **Context-Free Languages (Stack-Based)**: Languages like balanced parentheses (e.g., ((()))) require a "stack" or memory to keep track of counts.
     - Vanilla RNNs struggle here.
     - **LSTMs excel here** because the cell state acts like a stack-based counter, placing them in a strictly higher computational class.
@@ -425,12 +425,12 @@ While these theorems suggest infinite power, we are limited by **Numerical Preci
 
 ## Dynamical Systems Perspective
 
-Viewing an RNN as a **discrete-time dynamical system** shifts our focus from "layers" to "trajectories." Instead of just processing an input, the RNN is a particle moving through a high-dimensional state space. The inputs $x^{(t)}$ act as external forces that push this particle into different "valleys" or "orbits."
+Viewing an RNN as a **discrete-time dynamical system** shifts our focus from "layers" to "trajectories ". Instead of just processing an input, the RNN is a particle moving through a high-dimensional state space. The inputs $x^{(t)}$ act as external forces that push this particle into different "valleys" or "orbits ".
 
 ### Fixed Points and Stability
 
 A **fixed point ($h^*$)** is a state where the network’s memory stops changing ($h^* = f(h^*)$). These are the "resting places" of the network's logic.
-- **Stable Fixed Points (Attractors)**: If the eigenvalues of the Jacobian ($\partial f/\partial h$) are less than 1, the point is a "sink." Nearby states are sucked into it. This represents a robust memory of a specific concept.
+- **Stable Fixed Points (Attractors)**: If the eigenvalues of the Jacobian ($\partial f/\partial h$) are less than 1, the point is a "sink ". Nearby states are sucked into it. This represents a robust memory of a specific concept.
 - **Unstable Fixed Points (Repellers)**: If eigenvalues are greater than 1, states are pushed away. These often act as "decision boundaries" between two different stable memories.
 
 ### Attractors and Computation
@@ -443,13 +443,13 @@ A trained RNN doesn't just store one memory; it manages a landscape of multiple 
 
 RNNs can exhibit **chaotic dynamics**, where tiny differences in the initial word of a sentence lead to completely different final predictions (the "Butterfly Effect").
 - **The Lyapunov Exponent**: This measures how fast nearby trajectories diverge. A positive exponent indicates chaos.
-- **The Edge of Chaos**: Research shows that RNNs are most powerful when they operate right at the transition between stable (boring) and chaotic (unpredictable) behavior. At this "edge," the network has enough stability to remember the past but enough complexity to process rich, varied inputs.
+- **The Edge of Chaos**: Research shows that RNNs are most powerful when they operate right at the transition between stable (boring) and chaotic (unpredictable) behavior. At this "edge ", the network has enough stability to remember the past but enough complexity to process rich, varied inputs.
 
 ### Bifurcations and Transitions
 
 As an RNN trains, its weights $\theta$ change. These changes aren't just incremental; they can cause **bifurcations** - sudden, qualitative "shifts" in how the network behaves.
 - **Saddle-Node Bifurcation**: Two fixed points collide and vanish, forcing the network to find a completely new way to process data.
-- **Hopf Bifurcation**: A stable resting point suddenly starts to "wobble," turning into a limit cycle (a periodic oscillation). This is often how an RNN learns to generate rhythmic or repeating patterns, like music or walking strides.
+- **Hopf Bifurcation**: A stable resting point suddenly starts to "wobble ", turning into a limit cycle (a periodic oscillation). This is often how an RNN learns to generate rhythmic or repeating patterns, like music or walking strides.
 
 **The Optimization Landscape**: This suggests that training an RNN is less like climbing a hill and more like navigating a complex **phase diagram**. The optimizer is trying to find the exact "physics" for the state space so that the particle ends up in the correct attractor.
 
@@ -475,7 +475,7 @@ If you’ve ever looked at a language model's performance, you’ve seen **Perpl
 
 $$\text{Perplexity} = \exp\!\left(-\frac{1}{T}\sum_t \log P(y^{(t)} \mid y^{(1:t-1)})\right)$$
 
-- **The Branching Factor**: Perplexity represents the "effective number of choices." If a model has a perplexity of 50, it means it is as "confused" as if it had to pick uniformly from 50 equally likely words.
+- **The Branching Factor**: Perplexity represents the "effective number of choices ". If a model has a perplexity of 50, it means it is as "confused" as if it had to pick uniformly from 50 equally likely words.
 - **A "Perfect" Model**: If the model knew exactly what was coming next, the probability would be 1.0, and the perplexity would be 1. If it were purely guessing from a vocabulary of 10,000 words, the perplexity would be 10,000.
 
 ### Stationary Distributions
@@ -492,13 +492,13 @@ An RNN is essentially a **Compression Engine**.
 
 ### Mutual Information and Memory
 
-To quantify how much an RNN "remembers," we use **Mutual Information $I(h^{(t)}; x^{(t-\tau)})$**. This measures how much of the input from $\tau$ steps ago is still "visible" in the current hidden state.
+To quantify how much an RNN "remembers ", we use **Mutual Information $I(h^{(t)}; x^{(t-\tau)})$**. This measures how much of the input from $\tau$ steps ago is still "visible" in the current hidden state.
 - **Vanilla RNNs**: The Mutual Information decays **exponentially**. After 10 or 20 steps, $I \approx 0$, meaning the current state contains almost no information about the distant past.
-- **LSTMs**: Thanks to the "Constant Error Carousel," the decay is much slower. In an ideal world, the MI would be a flat line ($I \approx \text{const}$), though in practice, noise and new inputs eventually cause a gradual decline.
+- **LSTMs**: Thanks to the "Constant Error Carousel ", the decay is much slower. In an ideal world, the MI would be a flat line ($I \approx \text{const}$), though in practice, noise and new inputs eventually cause a gradual decline.
 
 ## Bidirectional RNNs and Encoder-Decoder Architectures
 
-Standard RNNs are "causal," meaning they only look at the past to predict the present. While this is necessary for real-time systems (like a robot predicting its next step), many tasks - like translating a sentence or tagging parts of speech - are "offline." In these cases, we have access to the entire sequence from the start.
+Standard RNNs are "causal ", meaning they only look at the past to predict the present. While this is necessary for real-time systems (like a robot predicting its next step), many tasks - like translating a sentence or tagging parts of speech - are "offline ". In these cases, we have access to the entire sequence from the start.
 
 ### Bidirectional RNN Theory
 
@@ -507,7 +507,7 @@ A Bidirectional RNN (BiRNN) allows the network to have both a "memory" of the pa
 2. **Backward Pass ($\overleftarrow{h}^{(t)}$)**: Processes the sequence from $t=T$ back to $1$.
 
 At every time step $t$, the two states are concatenated to form the final representation: $h^{(t)} = [\overrightarrow{h}^{(t)},\, \overleftarrow{h}^{(t)}]$.
-- **Contextual Disambiguation**: This is essential for language. Consider the word "**bank**" in the sentence: "The bank was closed because of the flood." A forward RNN sees "The bank" and doesn't know if it's a financial institution or a riverbank. A BiRNN sees "flood" later in the sequence and uses that future context to correctly identify the riverbank.
+- **Contextual Disambiguation**: This is essential for language. Consider the word "**bank**" in the sentence: "The bank was closed because of the flood ". A forward RNN sees "The bank" and doesn't know if it's a financial institution or a riverbank. A BiRNN sees "flood" later in the sequence and uses that future context to correctly identify the riverbank.
 - **Expressiveness**: BiRNNs are strictly more powerful than unidirectional ones for any task where the end of the sequence contains clues about the beginning.
 
 ### Encoder-Decoder Architecture
@@ -563,7 +563,7 @@ While the concept is the same, how we calculate that "relevance score" ($e_i^{(t
 
 The final evolution was **Self-Attention**. Researchers realized that if attention is great for connecting an encoder to a decoder, it’s even better for connecting a sequence to itself.
 
-In self-attention, every word in a sentence looks at every other word to determine its meaning. In the sentence "The animal didn't cross the street because it was too tired," self-attention allows the word "it" to "point" directly to "animal."
+In self-attention, every word in a sentence looks at every other word to determine its meaning. In the sentence "The animal didn't cross the street because it was too tired ", self-attention allows the word "it" to "point" directly to "animal ".
 
 In 2017, the paper "Attention is All You Need" proved that you don't even need the RNN "loops" anymore. By stacking self-attention layers, you get:
 - **Infinite Memory**: Every word is exactly **one step** away from every other word, regardless of sequence length.
@@ -609,7 +609,7 @@ For a sequence of 10,000 steps, your GPU will likely run out of RAM. The solutio
 
 When you are actually using a model to generate text (Inference), RNNs have a hidden advantage.
 - **RNNs**: To generate the next word, an RNN only needs the **current** hidden state. The cost per word is **constant** ($\mathcal{O}(d_h^2)$).
-- **Transformers**: Even with a "KV Cache," a Transformer must look back at all previous tokens. As the sentence gets longer, the Transformer gets slower.
+- **Transformers**: Even with a "KV Cache ", a Transformer must look back at all previous tokens. As the sentence gets longer, the Transformer gets slower.
 
 ***This is why RNN-like architectures are making a comeback in the form of "Linear Transformers" and "State Space Models" - they offer the high-quality reasoning of a Transformer with the "forever-fast" speed of an RNN.***
 
@@ -653,10 +653,10 @@ We say an algorithm is **$\beta$-stable** if changing one single example in your
 
 **Dropout** (randomly "turning off" neurons during training) is usually seen as a trick to prevent overfitting. However, research by Gal & Ghahramani (2016) showed it’s actually a way to do **Bayesian Inference**.
 
-By running the same input through an RNN with different dropout masks at "test time," we can see how much the answer changes.
+By running the same input through an RNN with different dropout masks at "test time ", we can see how much the answer changes.
 
 - *Low Variance**: The model is confident.
-- **High Variance**: The model is "confused."
+- **High Variance**: The model is "confused ".
 This provides Uncertainty Quantification, which is critical in fields like medicine or self-driving cars where knowing when the model is guessing is just as important as the guess itself.
 
 
@@ -683,7 +683,7 @@ This gives us the best of both worlds: the parallel training speed of a Transfor
 
 ### Mamba and Selective State Spaces
 
-**Mamba** (2023) is currently the most prominent challenger to the Transformer. It addresses a core limitation of previous SSMs: they were "content-blind." A standard SSM treats every token with the same weight, regardless of what the token is.
+**Mamba** (2023) is currently the most prominent challenger to the Transformer. It addresses a core limitation of previous SSMs: they were "content-blind ". A standard SSM treats every token with the same weight, regardless of what the token is.
 - **Selectivity**: Mamba makes the parameters $A$ and $B$ dependent on the input $x^{(t)}$. This allows the model to "selectively" remember important information and "filter out" the noise - essentially doing what the LSTM's gates did, but within a framework that remains parallelizable.
 - **The Result**: Mamba achieves **linear scaling** ($\mathcal{O}(T)$) and can outperform Transformers that are much larger, particularly on tasks requiring massive context windows.
 
@@ -710,7 +710,7 @@ Recurrent Neural Networks and their gated variants represent a profound achievem
 Core Pillars of Recurrent Learning
 - **Recursive Computation**: By updating the hidden state $h^{(t)} = f(h^{(t-1)}, x^{(t)})$, RNNs process variable-length inputs while sharing parameters across time. This is the ultimate "inductive bias" for sequences - the rules of grammar or physics don't change just because time passes.
 - **The Gradient Dilemma**: As analyzed by Hochreiter and Bengio, standard RNNs face a fundamental trade-off: storing long-term info requires stability (eigenvalues $\approx 1$), but that stability causes the very gradients needed for training to vanish.
-- **Gated Solutions**: LSTM and GRU resolve this dilemma through **additive updates** and **multiplicative gates**. By creating a "constant error carousel," they allow the gradient to survive the journey across hundreds or thousands of time steps without exponential decay.
+- **Gated Solutions**: LSTM and GRU resolve this dilemma through **additive updates** and **multiplicative gates**. By creating a "constant error carousel ", they allow the gradient to survive the journey across hundreds or thousands of time steps without exponential decay.
 - **Expressiveness**: RNNs are theoretically **Turing-complete**, and gated versions are strictly more powerful for discrete tasks like counting and precise state tracking compared to their vanilla predecessors.
 - **The Dynamical Lens**: Trained RNNs are discrete-time systems with their own "physics" - featuring attractors that represent memories and bifurcations that represent sudden shifts in logic.
 

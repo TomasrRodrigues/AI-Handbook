@@ -142,7 +142,7 @@ The value of $k$ creates a clear trade-off:
 - **$k =$ vocabulary size**: Equivalent to sampling without any top-k restriction
 
 One significant limitation of top-k sampling is that $k$ is fixed regardless of the model's confidence:
-- **When the model is very certain**: After "To be or not to," the next token is almost certainly "be." In such cases, restricting to the top 10 tokens is unnecessary; even the top 3 would suffice.
+- **When the model is very certain**: After "To be or not to ", the next token is almost certainly "be ". In such cases, restricting to the top 10 tokens is unnecessary; even the top 3 would suffice.
 - **When the model is uncertain**: At the beginning of a creative story, many different openings are equally plausible. Restricting to only 10 tokens might exclude many reasonable possibilities.
 
 This inflexibility motivated the development of top-p sampling, which adapts to the model's confidence level.
@@ -203,7 +203,7 @@ However, beam search has important limitations for open-ended generation:
 - **No streaming**: Can't be easily used for streaming generation where tokens are displayed as they're produced, since you don't know which beam was best until generation completes
 - **Optimizes for likelihood, not quality**: Most importantly, beam search optimizes for high likelihood, but high likelihood doesn't always mean high quality for creative tasks
 
-The most probable text according to the model is often generic and boring. "The cat sat on the mat" might have higher probability than "The cat perched precariously on the windowsill," but the second is more interesting and specific. For creative writing, conversation, or storytelling, sampling methods that inject randomness often produce better results than beam search, even though the sampled outputs have lower likelihood. Understanding when to use beam search versus sampling methods is crucial for effective deployment.
+The most probable text according to the model is often generic and boring. "The cat sat on the mat" might have higher probability than "The cat perched precariously on the windowsill ", but the second is more interesting and specific. For creative writing, conversation, or storytelling, sampling methods that inject randomness often produce better results than beam search, even though the sampled outputs have lower likelihood. Understanding when to use beam search versus sampling methods is crucial for effective deployment.
 
 ## Practical Configuration
 

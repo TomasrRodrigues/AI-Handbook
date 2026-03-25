@@ -31,14 +31,14 @@ Backpropagation uses the **Chain Rule** from calculus to break the total error i
 
 While powerful, backpropagation has its quirks:
 - **Differentiability**: It only works if every part of the network is "smooth" (differentiable). You can't use it to train systems with hard on/off switches.
-- **Gradient Instability**: In very deep networks, the error signal can either shrink to nothing (**vanishing**) or explode into infinity (**exploding**), causing the network to stop learning or "break."
+- **Gradient Instability**: In very deep networks, the error signal can either shrink to nothing (**vanishing**) or explode into infinity (**exploding**), causing the network to stop learning or "break ".
 - **Local Perspective**: Backpropagation only sees the "slope" immediately around it. It can sometimes get stuck in a "shallow valley" (local minimum) instead of finding the best possible solution.
 
 ### Historical Evolution
 
 The story of backpropagation is one of independent discovery and a long battle against skepticism.
 - **1970–1974: The Foundations**: Early versions of "automatic differentiation" were published by researchers like Linnainmaa and Paul Werbos. However, the world wasn't yet ready to see their potential for AI.
-- **1986: The Watershed Moment**: Rumelhart, Hinton, and Williams published their landmark paper in Nature. Before this, researchers struggled to train networks with "hidden layers." Single-layer networks could only solve simple, linear problems. This paper proved that by propagating errors backward, we could finally teach hidden layers to represent complex concepts.
+- **1986: The Watershed Moment**: Rumelhart, Hinton, and Williams published their landmark paper in Nature. Before this, researchers struggled to train networks with "hidden layers ". Single-layer networks could only solve simple, linear problems. This paper proved that by propagating errors backward, we could finally teach hidden layers to represent complex concepts.
 - **2012: The Deep Learning Big Bang**: Despite knowing the math, computers weren't fast enough for decades. This changed when **AlexNet** combined backpropagation with GPUs (graphics cards) and massive datasets (ImageNet). This moment proved that backpropagation could scale to solve world-class problems in vision and beyond.
 
 Today, this same algorithm - refined but fundamentally unchanged - powers everything from the translation apps on your phone to the massive Large Language Models (LLMs) like GPT-4.
@@ -188,7 +188,7 @@ Putting it all together, the training process for a single **minibatch** looks l
 
 ### Computational Complexity and Memory Requirements
 
-There is a fundamental reason why backpropagation is the industry standard: it is mathematically optimized for efficiency. However, that efficiency comes with a heavy "memory tax."
+There is a fundamental reason why backpropagation is the industry standard: it is mathematically optimized for efficiency. However, that efficiency comes with a heavy "memory tax ".
 
 The forward pass for a single example through a layer with $n_{in} \to n_{out}$ neurons costs approximately $2n_{in}n_{out}$ operations. Summing over all $L$ layers gives a total forward cost $F$.
 - **The $2F$ Rule**: Miraculously, the backward pass costs only about **twice** as much as a forward pass ($2F$), regardless of the number of parameters.
@@ -210,7 +210,7 @@ To train massive models on limited hardware, engineers use several strategic "tr
 
 ## Training Dynamics and Optimization
 
-If backpropagation provides the **GPS coordinates** (the gradients), the **Optimizer** is the driver steering the car. Computing the gradient tells you which way is "downhill," but the optimizer decides exactly how to turn the wheel and how hard to hit the gas to reach the bottom of the **Loss Landscape** without crashing.
+If backpropagation provides the **GPS coordinates** (the gradients), the **Optimizer** is the driver steering the car. Computing the gradient tells you which way is "downhill ", but the optimizer decides exactly how to turn the wheel and how hard to hit the gas to reach the bottom of the **Loss Landscape** without crashing.
 
 Backpropagation computes gradients - the **optimizer** determines how those gradients translate into parameter updates. The design space ranges from simple vanilla gradient descent to sophisticated adaptive methods, each with different trade-offs between update speed, gradient noise tolerance, and convergence quality.
 
@@ -389,7 +389,7 @@ In the early days of AI, researchers had to derive all these gradients by hand w
 
 ## Recent Developments and Future Directions
 
-While backpropagation is the undisputed king of deep learning, it isn't perfect. It is memory-hungry, biologically unrealistic, and computationally expensive. As we move toward larger models and new types of hardware (like photonic or neuromorphic chips), researchers are exploring ways to evolve or even replace the "backward pass."
+While backpropagation is the undisputed king of deep learning, it isn't perfect. It is memory-hungry, biologically unrealistic, and computationally expensive. As we move toward larger models and new types of hardware (like photonic or neuromorphic chips), researchers are exploring ways to evolve or even replace the "backward pass ".
 
 ### Alternatives to Backpropagation
 
@@ -399,14 +399,14 @@ The human brain doesn't seem to use backpropagation - neurons don't wait for a g
 |--------|---------|-----------|
 | **Feedback alignment** | Use a fixed random matrix for the backward pass instead of the exact weight transpose ($W^T$). | Proves the brain might not need to know exact connection strengths to learn. |
 | **Target propagation** | Instead of gradients, propagate "target activations" backward using approximate layer inverses. | Can potentially avoid the vanishing gradient problem entirely. |
-| **Equilibrium propagation** | Treat the network like a physical system that settles into an energy-minimum "equilibrium." | Extremely efficient for future analog or neuromorphic hardware. |
-| **Forward-forward algorithm** | Uses two forward passes (one "positive," one "negative") to replace the backward pass. | Proposed by Geoffrey Hinton in 2022 to enable learning on low-power hardware. |
+| **Equilibrium propagation** | Treat the network like a physical system that settles into an energy-minimum "equilibrium ". | Extremely efficient for future analog or neuromorphic hardware. |
+| **Forward-forward algorithm** | Uses two forward passes (one "positive ", one "negative") to replace the backward pass. | Proposed by Geoffrey Hinton in 2022 to enable learning on low-power hardware. |
 
 > **Reality Check**: Despite these innovations, ***none has matched backpropagation's combination of generality, efficiency, and empirical performance for standard architectures on current hardware.***
 
 ### Backpropagation-Free Neural Networks
 
-We are entering an era of **Physical Neural Networks**. Imagine a chip that uses light (photonics) or sound to process data. These systems can perform the "forward pass" at the speed of light with almost zero energy, but they can't easily perform a "backward pass."
+We are entering an era of **Physical Neural Networks**. Imagine a chip that uses light (photonics) or sound to process data. These systems can perform the "forward pass" at the speed of light with almost zero energy, but they can't easily perform a "backward pass ".
 
 Active research is focused on:
 - **Direct Gradient Measurement**: Wiggling physical parameters to see how the output changes.
@@ -423,7 +423,7 @@ Mathematically, a deep network’s "Loss Landscape" should be a nightmare of tra
 As models like GPT-4 grow, we can no longer fit them on a single chip. We use specialized engineering tactics to scale backpropagation:
 - **Mixed Precision**: Using 16-bit math for speed and 32-bit math for accuracy.
 - **Gradient Checkpointing**: A "save-game" strategy. We don't store every activation; we delete some and re-calculate them only when needed during the backward pass. This trades a bit of time for a massive saving in memory (VRAM).
-- **Pipeline Parallelism**: Splitting a model like a long train across multiple GPUs. While the first GPU is doing the forward pass on "Batch B," the last GPU is finishing the backward pass on "Batch A."
+- **Pipeline Parallelism**: Splitting a model like a long train across multiple GPUs. While the first GPU is doing the forward pass on "Batch B ", the last GPU is finishing the backward pass on "Batch A ".
 
 ### Future Outlook
 
@@ -438,7 +438,7 @@ Writing backpropagation code is one thing; making it run fast and reliably on re
 
 In deep learning, **Loops are the Enemy**. If you write a "for-loop" to process your data one by one, your training will be thousands of times slower than it should be.
 - **Vectorization**: Modern GPUs are designed to perform "SIMD" (Single Instruction, Multiple Data). This means they can multiply a whole matrix in the same time it takes a CPU to multiply two numbers. Always express your backprop as matrix operations ($Z = WA + b$).
-- **Contiguous Memory**: How you store your data in RAM matters. If your matrices are "fragmented," the GPU has to wait for data to be moved around. Keeping data in a contiguous block ensures the fastest possible "throughput."
+- **Contiguous Memory**: How you store your data in RAM matters. If your matrices are "fragmented ", the GPU has to wait for data to be moved around. Keeping data in a contiguous block ensures the fastest possible "throughput ".
 - **Gradient Accumulation**: What if your model is so big it can only fit one image at a time on your GPU, but you want to train with a batch of 64? You can run 64 forward/backward passes, **adding up** the gradients locally, and then perform a single weight update at the end. This "simulates" a large batch without the massive memory requirement.
 
 ### Numerical Stability
@@ -449,7 +449,7 @@ Computers have limits on how small or large a number they can represent. If you 
 |-------|-----------------|-------------------|
 | Softmax Overflow | Calculating $e^x$ for a large $x$ (like 1000) results in infinity. | **The Shift Trick**: Subtract the maximum value from all inputs before calculating the exponent. It doesn't change the result but keeps the numbers small. |
 | **Log of Small Number** | Calculating $\log(0)$ is impossible ($-\infty$). | **Log-Space Math**: Use specialized functions like `LogSumExp` which perform the math in a way that avoids ever reaching absolute zero. |
-| **Precision Loss** | 16-bit floats (FP16) are fast but "blunt." | **Loss Scaling**: Multiply your loss by a large number (e.g., 1024) during backprop to keep the tiny gradients from rounding down to zero, then scale it back down at the very end. |
+| **Precision Loss** | 16-bit floats (FP16) are fast but "blunt ". | **Loss Scaling**: Multiply your loss by a large number (e.g., 1024) during backprop to keep the tiny gradients from rounding down to zero, then scale it back down at the very end. |
 
 > [TODO: Image of numerical stability shift trick for softmax computation]
 
@@ -511,7 +511,7 @@ In RL, the "Labels" ($y$) don't exist. Instead, we have **Rewards** (like points
 Even the best backpropagation engine will fail if these three "knobs" aren't dialed in correctly:
 1. **Learning Rate ($\eta$)**: The most critical. Too high, and the model "explodes" out of the valley; too low, and it will take years to reach the bottom.
 2. **Batch Size ($B$)**: Smaller batches are "noisier" (which helps exploration), while larger batches provide smoother, more accurate gradients.
-3. **Weight Init Scale**: Determines if your initial gradients start as a "whisper" or a "scream."
+3. **Weight Init Scale**: Determines if your initial gradients start as a "whisper" or a "scream ".
 
 Automated tuning approaches such as Bayesian optimization and population-based training can search these spaces systematically. That said, understanding the mechanistic effect of each hyperparameter enables more targeted manual adjustment and is often faster than blind search for finding the root cause of a training problem.
 

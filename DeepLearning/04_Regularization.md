@@ -58,7 +58,7 @@ Before we apply regularization, we need to understand the mathematical "laws of 
 
 ### PAC Learning
 
-The **PAC (Probably Approximately Correct)** framework is the gold standard for defining whether a problem is "learnable." It asks: How many examples ($n$) do we need to be reasonably sure our model is mostly right?
+The **PAC (Probably Approximately Correct)** framework is the gold standard for defining whether a problem is "learnable ". It asks: How many examples ($n$) do we need to be reasonably sure our model is mostly right?
 
 A key takeaway is the **Sample Complexity** formula for a finite set of possible models ($\mathcal{H}$):
 
@@ -75,7 +75,7 @@ This is the simplest quantification of a universal principle: **richer hypothesi
 
 ### Empirical Risk Minimization and its Regularized Form
 
-**Empirical Risk Minimization (ERM)** is the fancy name for "minimizing training error." But if our hypothesis class is too flexible, ERM will simply memorize the noise. To fix this, we use **Regularized ERM**:
+**Empirical Risk Minimization (ERM)** is the fancy name for "minimizing training error ". But if our hypothesis class is too flexible, ERM will simply memorize the noise. To fix this, we use **Regularized ERM**:
 
 $$h_\lambda = \arg\min_{h \in \mathcal{H}}\left[\underbrace{\hat{R}_S(h)}_{\text{Training Error}} + \underbrace{\lambda \cdot \Omega(h)}_{\text{Regularization Penalty}}\right]$$
 
@@ -236,13 +236,13 @@ Depth changes the implicit regularization. For deep linear networks $h(x; W_1, \
 Stochastic Gradient Descent (SGD) is "noisier" than standard Gradient Descent because it looks at small batches rather than the whole dataset. This noise acts like a high-temperature search that helps the model escape "sharp" valleys and settle into flat minima.
 - **Sharp Minima**: Narrow pits where a tiny change in weights causes a huge spike in error. These generalize poorly because the "test" data is always slightly different from the "train" data.
 - **Flat Minima**: Broad, gentle basins where small weight changes don't affect the error much. These are much more robust and generalize beautifully to new data.
-- **The Control Knobs**: Increasing the **learning rate** or decreasing the **batch size** increases this "noise temperature," pushing the model harder toward these high-quality, flat regions.
+- **The Control Knobs**: Increasing the **learning rate** or decreasing the **batch size** increases this "noise temperature ", pushing the model harder toward these high-quality, flat regions.
 
 > TODO: [A 3D Loss Landscape. One side shows a "Sharp Minimum" (steep walls) and the other shows a "Flat Minimum" (wide basin).]
 
 ### The Edge of Stability
 
-We often imagine training as a smooth glide to the bottom of a bowl, but research shows it's actually more chaotic. During training, the landscape becomes increasingly "sharp" until it hits a stability threshold ($\approx 2/\eta$). At this point, the model begins to oscillate wildly along the "edge of stability." Surprisingly, this chaos doesn't ruin training; it actually regularizes the model, forcing it to refine its representations further rather than simply getting stuck.
+We often imagine training as a smooth glide to the bottom of a bowl, but research shows it's actually more chaotic. During training, the landscape becomes increasingly "sharp" until it hits a stability threshold ($\approx 2/\eta$). At this point, the model begins to oscillate wildly along the "edge of stability ". Surprisingly, this chaos doesn't ruin training; it actually regularizes the model, forcing it to refine its representations further rather than simply getting stuck.
 
 
 ### Max-Margin Classification and Feature Learning
@@ -273,7 +273,7 @@ Because SGD is noisy, the validation error won't be a perfectly smooth curve; it
 
 If you don't have enough data to prevent overfitting, you can simply "hallucinate" more. **Data Augmentation** is the process of creating new training examples by applying transformations to your existing ones. The goal is to teach the model **invariance**: the idea that a "cat" is still a "cat" whether it is flipped, rotated, or slightly discolored.
 
-Mathematically, we are defining a transformation $T$ that is "label-preserving." If $x$ is an image of a dog, then $T(x)$ (the flipped dog) should still result in the label "dog." By training on these variations, we force the model to ignore the "noise" of the transformation and focus on the core features of the object.
+Mathematically, we are defining a transformation $T$ that is "label-preserving ". If $x$ is an image of a dog, then $T(x)$ (the flipped dog) should still result in the label "dog ". By training on these variations, we force the model to ignore the "noise" of the transformation and focus on the core features of the object.
 
 From a theoretical view, this is called **Vicinal Risk Minimization**. Instead of just caring about the exact pixels of your training set, the model learns to care about the "neighborhood" around those pixels. This effectively smooths out the decision boundary, making the model much more robust to small changes in real-world data.
 
@@ -334,7 +334,7 @@ Temperature $T > 1$ softens probability distributions, revealing the teacher's u
 
 ## Information-Theoretic Perspectives on Regularization
 
-While $L_1$ and $L_2$ penalties are the "hammers" of regularization, Information Theory provides the "blueprint." It reveals that regularization isn't just about making weights small; it's about **information management**. A model that generalizes well is essentially a model that has successfully "compressed" the world.
+While $L_1$ and $L_2$ penalties are the "hammers" of regularization, Information Theory provides the "blueprint ". It reveals that regularization isn't just about making weights small; it's about **information management**. A model that generalizes well is essentially a model that has successfully "compressed" the world.
 
 ### Compression and Generalization
 
@@ -350,7 +350,7 @@ This explains why **Pruning** (deleting 90% of a model's weights) or **Quantizat
 
 $$ \min I(W;S)$$
 
-Minimizing mutual information ensures the model doesn't encode the training set's unique "fingerprint," leaving it free to capture universal patterns.
+Minimizing mutual information ensures the model doesn't encode the training set's unique "fingerprint ", leaving it free to capture universal patterns.
 
 ### PAC-Bayes
 
@@ -398,7 +398,7 @@ The **Double Descent** curve shows that as you increase model complexity, the te
 > TODO: [The "Modern" U-curve. It shows the error going down, then up (interpolation peak), then down again into the "overparameterized" valley.]
 
 The secret lies in the **minimum norm interpolator**. When a model is massive, there are millions of ways it can fit the training data perfectly. Our optimizers (like SGD) are biased toward the "simplest" of these solutions - the one with the smallest weights.
-- **At the Threshold**: The model has no "room" to be smooth; it must use every bit of its capacity just to fit the data, leading to high-variance "spikes."
+- **At the Threshold**: The model has no "room" to be smooth; it must use every bit of its capacity just to fit the data, leading to high-variance "spikes ".
 - **In Overparameterization**: The extra parameters provide the "freedom" to spread the influence of the data across many weights. This naturally results in a smoother, more stable function that generalizes beautifully.
 
 ### Benign Overfitting
@@ -411,7 +411,7 @@ This happens when the "noise" in the data is essentially "absorbed" by the vast 
 
 ### Practical Implications
 
-Double descent fundamentally changes how we build models. The old advice was to "regularize until the model is small enough." The new advice is: **Avoid the "Critical Zone"**.
+Double descent fundamentally changes how we build models. The old advice was to "regularize until the model is small enough ". The new advice is: **Avoid the "Critical Zone"**.
 - **The "Stay Away" Rule**: You should either keep your model small and simple ($p < n$) or make it massive ($p \gg n$). Being "just big enough" to fit your data is the most dangerous place to be.
 - **Weight Decay in Large Models**: In massive models (like GPT-4), we use relatively small weight decay ($\lambda \approx 0.01$). This is because the optimization process itself is already doing the heavy lifting of regularization; adding too much explicit penalty can actually hurt the model's ability to find that second, deeper valley of performance.
 
@@ -443,7 +443,7 @@ In modern AI, the "shape" of the network is often its strongest regularizer.
 
 If you are building a massive model today, your regularization strategy should look different than it did ten years ago:
 1. **Weaken the "Leash"**: Use smaller weight decay ($\lambda \approx 0.01$). Let the optimizer find the natural flat minima rather than strangling the weights with a heavy penalty.
-2. **Be Adaptive**: Use weaker regularization early on to allow the model to discover "Features," and tighten it later to prevent it from memorizing "Noise".
+2. **Be Adaptive**: Use weaker regularization early on to allow the model to discover "Features ", and tighten it later to prevent it from memorizing "Noise".
 3. **Optimizer as Regularizer**: Remember that your choice of **Batch Size** and **Learning Rate** is your primary regularization tool. A smaller batch size and a well-tuned schedule often do more to prevent overfitting than any $L_2$ penalty ever could.
 
 ## Conclusion
@@ -454,6 +454,6 @@ Regularization is one of the deepest and most enduring concepts in machine learn
 - **Inductive Bias is Mandatory**: Without assumptions about the data or the function class, generalization is mathematically impossible. Regularization is the primary language we use to speak these assumptions into our models.
 - **The Layered Effect**: In modern deep learning, regularization is rarely just one thing. It is a "stack" where explicit penalties ($L_2$, Dropout), architectural constraints (Convolutions, Residuals), and optimization dynamics (SGD noise, Batch Size) all act simultaneously.
 - **The Overparameterized Paradox**: We have moved past the classical fear of "too much capacity". **Double Descent** and **Benign Overfitting** prove that in the right regimes, massive models don't just memorize - they find smoother, more robust solutions than their smaller counterparts.
-- **Optimization is Regularization**: The "how" of training is as important as the "what." Your choice of optimizer, learning rate schedule, and initialization determines which of the infinitely many possible solutions your model will settle into.
+- **Optimization is Regularization**: The "how" of training is as important as the "what ". Your choice of optimizer, learning rate schedule, and initialization determines which of the infinitely many possible solutions your model will settle into.
 
 As we push toward even larger models and more complex tasks like in-context learning and domain transfer, the theory of regularization must continue to evolve. The fundamental challenge remains the same: ensuring that a model doesn't just "remember" its past, but truly understands the patterns required to predict the future. Regularization remains the cornerstone of that bridge between memorization and intelligence.

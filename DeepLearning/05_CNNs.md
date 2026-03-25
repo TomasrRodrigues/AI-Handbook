@@ -30,7 +30,7 @@ However, the Neocognitron lacked an effective learning algorithm. Fukushima used
 
 The "Aha!" moment happened in 1989 when Yann LeCun used backpropagation to train a network for zip code recognition. This led to **LeNet-5** in 1998, the first architecture to prove that a machine could automatically discover features. It looked for strokes and edges without being told where to find them.
 
-After LeNet, CNNs hit a "Dark Age." They were too slow for the CPUs of the time, and we didn't have enough data. That changed in 2012 with AlexNet. By crushing the competition at the ImageNet challenge, AlexNet proved that with **GPUs** (raw power), **ImageNet** (massive data), and **ReLU** (better math), deep CNNs were unbeatable.
+After LeNet, CNNs hit a "Dark Age ". They were too slow for the CPUs of the time, and we didn't have enough data. That changed in 2012 with AlexNet. By crushing the competition at the ImageNet challenge, AlexNet proved that with **GPUs** (raw power), **ImageNet** (massive data), and **ReLU** (better math), deep CNNs were unbeatable.
 
 Today, we’re in the **Vision Transformer (ViT)** era. These models ditch the "neighborhood" assumption of convolutions and treat images like sequences of patches. It raises a fascinating question: Is the convolutional bias (looking at nearby pixels) a fundamental law of vision, or just a helpful shortcut when data is scarce? Current evidence suggests a middle ground: CNNs are great when you have less data because they "know" how images work out of the box. Transformers, however, are like sponges; if you give them enough data, they can learn those rules (and more) from scratch.
 
@@ -85,7 +85,7 @@ The connection between convolution and the Fourier transform provides the "spect
 
 1. **The Fourier Transform**: For an image $f$, the Fourier transform $\hat{f}(\omega)$ decomposes the spatial signal into its frequency components. It represents the image as a superposition of sinusoids: $$\hat{f}(\omega) = \int_{\mathbb{R}^d} f(x)\, e^{-2\pi i x \cdot \omega}\, dx$$
 
-2. **The Convolution Theorem**: The most powerful result in this domain is that convolution in the spatial domain is equivalent to point-wise multiplication in the **frequency domain**: $$\mathcal{F}\{f * g\} = \hat{f}(\omega) \cdot \hat{g}(\omega)$$ This matters because instead of sliding a window across millions of pixels, you can transform the whole image and the filter into "frequency space," multiply them, and transform back.
+2. **The Convolution Theorem**: The most powerful result in this domain is that convolution in the spatial domain is equivalent to point-wise multiplication in the **frequency domain**: $$\mathcal{F}\{f * g\} = \hat{f}(\omega) \cdot \hat{g}(\omega)$$ This matters because instead of sliding a window across millions of pixels, you can transform the whole image and the filter into "frequency space ", multiply them, and transform back.
 
 3. **FFT-based Convolution vs. Spatial Convolution**: This theorem gives us a choice in how we compute a layer. We can use the **Fast Fourier Transform (FFT)**:
     1. Compute $\hat{X} = \text{FFT}(X)$ and $\hat{W} = \text{FFT}(W)$.
@@ -126,7 +126,7 @@ While we want the hidden layers to be equivariant (so they can track where featu
 
 CNNs achieve this through a four-stage "filtering" process:
 1. **Convolutional Layers**: Maintain spatial structure (Equivariant).
-2. **Local Max Pooling**: Provides a small amount of "slop." If a feature moves slightly within a $2 \times 2$ window, the maximum stays the same (Local Invariance).
+2. **Local Max Pooling**: Provides a small amount of "slop ". If a feature moves slightly within a $2 \times 2$ window, the maximum stays the same (Local Invariance).
 3. **Global Average Pooling (GAP)**: Averages the entire feature map into a single number. This operation is **exactly** translation invariant.
 4. **Composition**: By stacking these, the network's "view" grows from precise local pixels to broad, globally invariant concepts.
 
@@ -134,14 +134,14 @@ CNNs achieve this through a four-stage "filtering" process:
 ### Equivariance to Other Transformations
 
 Standard CNNs are built for translations, but they are surprisingly "blind" to other transformations like rotation or scaling unless specifically trained for them.
-- **Rotations**: Standard kernels don't naturally "rotate." To fix this, researchers use **Group-equivariant CNNs (G-CNNs)**, which perform convolutions over a group like $SO(2)$ (rotations). For a group $G$, the group convolution is: $$(f *_G K)[g] = \int_G f(h)\, K(h^{-1}g)\, dh$$
+- **Rotations**: Standard kernels don't naturally "rotate ". To fix this, researchers use **Group-equivariant CNNs (G-CNNs)**, which perform convolutions over a group like $SO(2)$ (rotations). For a group $G$, the group convolution is: $$(f *_G K)[g] = \int_G f(h)\, K(h^{-1}g)\, dh$$
 - **Scale**: Handled by multi-scale architectures or pooling hierarchies.
 - **Reflections**: Usually handled via data augmentation (flipping the images during training).
 
 
 ### Deformation Stability
 
-The real world isn't perfectly shifted or rotated; it’s "squishy." Objects deform, stretch, and bend. A robust feature extractor must be stable to deformations - slight distortions that preserve semantic content.
+The real world isn't perfectly shifted or rotated; it’s "squishy ". Objects deform, stretch, and bend. A robust feature extractor must be stable to deformations - slight distortions that preserve semantic content.
 
 A diffeomorphism $\tau: \mathbb{R}^d \to \mathbb{R}^d$ deforms signal $f$ to $f_\tau(x) = f(\tau(x))$. A feature extractor $\Phi$ is **deformation-stable** if
 
@@ -172,7 +172,7 @@ $$Y[i, j, c] = \sigma\left(\sum_{\Delta i, \Delta j, c'} X[s \cdot i + \Delta i,
 To appreciate the power of convolution, we must look at its two guiding constraints:
 1. **Local Connectivity**: In a Dense layer, every single output neuron is connected to every single input pixel. In a 1000x1000 image, one neuron would have 1 million weights. In a **Convolutional layer**, a neuron only "sees" a small local patch (e.g., 3x3).
     - *To detect an edge or a curve, you don't need to look at the whole image at once. You only need to look at the immediate surrounding pixels.*
-2. **Parameter Sharing**: This is the "secret sauce." In a Dense layer, if you learn to recognize a "vertical line" in the top-left corner, that knowledge doesn't help you recognize a vertical line in the bottom-right. You'd have to learn it all over again with different weights. In a **CNN**, we use the **exact same filter** (the same weights) for every position in the image.
+2. **Parameter Sharing**: This is the "secret sauce ". In a Dense layer, if you learn to recognize a "vertical line" in the top-left corner, that knowledge doesn't help you recognize a vertical line in the bottom-right. You'd have to learn it all over again with different weights. In a **CNN**, we use the **exact same filter** (the same weights) for every position in the image.
     - *If a feature is useful to compute at one spatial position, it is likely useful to compute at other positions. This drastically reduces the number of parameters and makes the model "translation equivariant".*
 
 | Feature | Fully Connected (Dense) | Convolutional Layer |
@@ -202,7 +202,7 @@ Padding addresses the boundary problem. Without padding, the pixels at the very 
 
 ### Dilated (Atrous) Convolution
 
-Standard convolution has contiguous receptive fields. **Dilated filters** have "holes." A 3x3 filter with a **dilation rate of 2** spreads its weights across a 5x5 area, skipping every other pixel.
+Standard convolution has contiguous receptive fields. **Dilated filters** have "holes ". A 3x3 filter with a **dilation rate of 2** spreads its weights across a 5x5 area, skipping every other pixel.
 
 This is incredibly powerful in **Semantic Segmentation** (like self-driving car vision). It allows the network to have a massive receptive field (seeing the whole road) while maintaining the high-resolution detail of the original pixels. It provides "global context" without the heavy cost of huge filters.
 
@@ -271,7 +271,7 @@ $$
 
 Some advanced pooling strategies include:
 - **Stochastic Pooling**: Instead of picking the max or the average, it treats the activations as probabilities and "samples" a value. It’s essentially a form of Dropout for spatial locations, injecting noise to prevent the model from getting too comfortable with specific pixel values.
-- **$L_p$ Pooling**: This is the mathematical "middle ground." By adjusting the power $p$, you can slide between Average Pooling ($p=1$) and Max Pooling ($p \to \infty$). $L_2$ pooling (the root-mean-square) is often used to capture the energy of the activations.
+- **$L_p$ Pooling**: This is the mathematical "middle ground ". By adjusting the power $p$, you can slide between Average Pooling ($p=1$) and Max Pooling ($p \to \infty$). $L_2$ pooling (the root-mean-square) is often used to capture the energy of the activations.
 - **Spatial Pyramid Pooling (SPP)**: This allows a network to take an image of any size. It divides the image into a grid (e.g., $1 \times 1$, $2 \times 2$, $4 \times 4$) and pools within each. No matter how big the input image is, the output is always a fixed-length vector.
 
 ### Information Loss vs. Invariance
@@ -302,12 +302,12 @@ Mathematically, if you compose multiple linear functions, the result is still ju
 
 > ***Theorem.** An $L$-layer neural network without nonlinear activations is equivalent to a single-layer linear model.*
 
-Nonlinearity is the "magic" that allows deep networks to approximate almost any function. As you add layers with non-linear "sparks," the network gains an **exponential advantage** in representational power, allowing it to move from simple line-fitting to recognizing a human face or an autonomous driving path.
+Nonlinearity is the "magic" that allows deep networks to approximate almost any function. As you add layers with non-linear "sparks ", the network gains an **exponential advantage** in representational power, allowing it to move from simple line-fitting to recognizing a human face or an autonomous driving path.
 
 ### Rectified Linear Unit (ReLU)
 
 The **Rectified Linear Unit (ReLU)** $\sigma(x) = \max(0, x)$ is the undisputed king of hidden layers in CNNs. Before ReLU, networks were slow and difficult to train. ReLU changed the game for several reasons:
-- **Computational efficiency:** It’s just a simple "if $x < 0$ then $0$ else $x$." It requires no expensive exponentials or divisions.
+- **Computational efficiency:** It’s just a simple "if $x < 0$ then $0$ else $x$ ". It requires no expensive exponentials or divisions.
 - **Sparse activations:** In a typical trained network, about 50% of neurons are "off" (zero) at any given time. This makes the model lighter and often easier to interpret.
 - **No vanishing gradients:** $\partial\sigma/\partial x = 1$ for $x > 0$, Unlike older functions, ReLU doesn't "flatten out" for positive values. The gradient is always 1, meaning the "signal" from the loss function can travel back through 100+ layers without fading away.
 - **Biological plausibility:** ReLU resembles the firing rate of biological neurons responding to stimulus.
@@ -384,7 +384,7 @@ Strides and pooling layers act as "accelerators" for the RF. While a $3 \times 3
 CNNs learn to see the world exactly like the human brain: by starting with the simple and building toward the complex. This is known as **Compositional Generalization**.
 - **Low-Level (Layer 1-2)**: Detects "Gabor filters" - simple edges, color blobs, and orientations.
 - **Mid-Level (Layer 3)**: Combines edges into textures, junctions, and simple repeating patterns (like honeycomb or stripes).
-- **High-Level (Layer 4-5)**: Detects semantically meaningful "parts," such as a dog's ear, a car wheel, or a bird's beak.
+- **High-Level (Layer 4-5)**: Detects semantically meaningful "parts ", such as a dog's ear, a car wheel, or a bird's beak.
 - **Top-Level (Final Layers)**: Recognizes full objects and complex scenes.
 
 By learning this hierarchy, the network doesn't have to "memorize" every possible face. It just needs to learn what an eye, a nose, and a mouth look like, and then learn how they are usually positioned relative to each other.
@@ -400,10 +400,10 @@ Real-world objects appear at different sizes. A car might be 500 pixels wide in 
 As networks grew deeper (from AlexNet's 8 layers to ResNet's 152), they hit a wall: **vanishing gradients**. The "signal" from the error would get lost as it traveled back through dozens of layers.
 
 1. **Residual Connections (ResNet)**: He et al. introduced the Residual Block, which adds the original input $x$ back to the output of the convolutional layers: $$y = F(x, \{W_i\}) + x$$ where $F$ is a stack of convolutional layers (the residual function) and $x$ is the identity shortcut. The network learns the residual $F$ rather than the full mapping. 
-    - *Instead of learning a brand new transformation, the network only has to learn the difference (the residual) between the input and the goal. If a layer is useless, it can simply learn to output zero, and the signal passes through unchanged via the "identity shortcut."*
+    - *Instead of learning a brand new transformation, the network only has to learn the difference (the residual) between the input and the goal. If a layer is useless, it can simply learn to output zero, and the signal passes through unchanged via the "identity shortcut ".*
 
 2. **Dense Connections (DenseNet)**: DenseNet takes this further by connecting every layer to every other layer within a block. $$y_\ell = H_\ell([x_0, x_1, \ldots, x_{\ell-1}])$$
-    - *It maximizes "feature reuse." If Layer 2 discovers a great edge detector, Layer 50 can still access it directly. This makes the network incredibly parameter-efficient because it doesn't need to "re-learn" the same features in every layer.*
+    - *It maximizes "feature reuse ". If Layer 2 discovers a great edge detector, Layer 50 can still access it directly. This makes the network incredibly parameter-efficient because it doesn't need to "re-learn" the same features in every layer.*
 
 
 ## Modern Architectural Innovations
@@ -454,7 +454,7 @@ EfficientNet-B7 achieved state-of-the-art accuracy while being 8.4x smaller and 
 ### Mobile Architectures: MobileNet and ShuffleNet
 
 To run AI on a smartphone, we need to cut the "FLOPs" (computational operations) without losing accuracy.
-1. MobileNet (Depthwise Separable Convolutions): Instead of one heavy 3D convolution, it splits the job into two: one 2D filter per channel, followed by a $1 \times 1$ "mixer." This results in an 8x to 9x reduction in computation.ShuffleNet: Uses "Channel Shuffling" to allow information to flow between different groups of features without the high cost of a full convolution.
+1. MobileNet (Depthwise Separable Convolutions): Instead of one heavy 3D convolution, it splits the job into two: one 2D filter per channel, followed by a $1 \times 1$ "mixer ". This results in an 8x to 9x reduction in computation.ShuffleNet: Uses "Channel Shuffling" to allow information to flow between different groups of features without the high cost of a full convolution.
 
 > TODO: [Image comparing standard convolution and depthwise separable convolution]
 
@@ -502,7 +502,7 @@ Even if you don't use $L_2$ regularization or Dropout, Gradient Descent itself i
 
 ## Adversarial Robustness and Stability
 
-Even the most advanced CNNs have a surprising "glass jaw." They are notoriously vulnerable to adversarial examples: inputs that have been modified by a tiny, invisible amount of noise but cause the model to fail catastrophically. To a human, the image is still a panda; to the CNN, it’s now a gibbon with 99% confidence.
+Even the most advanced CNNs have a surprising "glass jaw ". They are notoriously vulnerable to adversarial examples: inputs that have been modified by a tiny, invisible amount of noise but cause the model to fail catastrophically. To a human, the image is still a panda; to the CNN, it’s now a gibbon with 99% confidence.
 
 How do you break a CNN? You use the model's own gradients against it.
 1. **FGSM (Fast Gradient Sign Method)**: This is a "one-shot" attack. It calculates the gradient of the loss with respect to the input pixels and moves every pixel just a tiny bit in the direction that increases the error. $$x_{\text{adv}} = x + \varepsilon \cdot \operatorname{sign}(\nabla_x\, \mathcal{L}(f(x), y))$$
@@ -526,18 +526,18 @@ However, deep networks are essentially massive multiplications of weight matrice
 
 If we want to use CNNs in self-driving cars or medical imaging, we need them to be "hardened" against these attacks.
 
-- **Adversarial Training**: This is the most effective practical defense. During training, we generate adversarial versions of our images and tell the model: "This is still a panda." It’s like a vaccine; by exposing the model to a small amount of "virus" during training, it learns to ignore it in the wild.
+- **Adversarial Training**: This is the most effective practical defense. During training, we generate adversarial versions of our images and tell the model: "This is still a panda ". It’s like a vaccine; by exposing the model to a small amount of "virus" during training, it learns to ignore it in the wild.
 - **The Robustness Trade-off**: There is no free lunch. Making a model robust usually makes it slightly less accurate on clean images. A perfectly robust model might be "blunter" and miss subtle details that a non-robust model would catch.
 
 ### Certified Defenses
 
-While adversarial training is a good "heuristic," it doesn't guarantee a hacker won't find a new, clever way to break the model. **Certified Defenses** try to provide a mathematical "safety bubble."
+While adversarial training is a good "heuristic ", it doesn't guarantee a hacker won't find a new, clever way to break the model. **Certified Defenses** try to provide a mathematical "safety bubble ".
 - **Randomized Smoothing**: We add random Gaussian noise to the input many times and take the average prediction. This creates a "smooth" version of the model that is mathematically guaranteed to give the same answer within a certain radius of the original image. $$f_{\text{smooth}}(x) = \operatornamewithlimits{argmax}_y\, \mathbb{P}[f(x + \varepsilon) = y], \quad \varepsilon \sim \mathcal{N}(0, \sigma^2 I)$$
 - **Interval Bound Propagation**: This "tracks" a range of possible pixel values through the whole network to ensure that no matter what noise is added (within a certain range), the final score for the correct class will always stay on top.
 
 ### Geometric Perspective on Adversarial Examples
 
-Adversarial examples reveal that CNNs see the world as a series of high-dimensional "islands." The **Decision Boundaries** (the lines where one class becomes another) are often incredibly complex and "crinkly." Adversarial attacks find the tiny, jagged "points" of these boundaries that are closest to our images and "push" the image over the edge.
+Adversarial examples reveal that CNNs see the world as a series of high-dimensional "islands ". The **Decision Boundaries** (the lines where one class becomes another) are often incredibly complex and "crinkly ". Adversarial attacks find the tiny, jagged "points" of these boundaries that are closest to our images and "push" the image over the edge.
 
 More fascinatingly, there are **Universal Adversarial Perturbations**: a single, specific pattern of noise that can be added to any image to break the model 80% of the time. This suggests that the model’s "blind spots" aren't just random; they are a fundamental part of how it has learned to represent the world.
 
@@ -566,7 +566,7 @@ In CNNs, **Max Pooling** is a major culprit for aliasing. By jumping over pixels
 
 ### Compressed Sensing and Sparse CNNs
 
-**Compressed Sensing** tells us we can reconstruct a signal using very few measurements if the signal is "sparse." In the CNN world, this leads us to **Pruning** - the art of deleting 90% of a model's weights without losing accuracy.
+**Compressed Sensing** tells us we can reconstruct a signal using very few measurements if the signal is "sparse ". In the CNN world, this leads us to **Pruning** - the art of deleting 90% of a model's weights without losing accuracy.
 
 This is formalized by the **Lottery Ticket Hypothesis**:
 > Inside every large, dense network, there is a small "winning ticket" subnetwork that could have been trained just as effectively on its own.
@@ -575,7 +575,7 @@ From a mathematical perspective, we are searching for a $k$-sparse representatio
 
 ### Frame Theory and CNN Representations
 
-A **frame** is like a mathematical "safety net." Unlike a rigid coordinate system, a frame allows for redundancy.
+A **frame** is like a mathematical "safety net ". Unlike a rigid coordinate system, a frame allows for redundancy.
 
 $$A\|f\|^2 \leq \sum_i |\langle f, \phi_i \rangle|^2 \leq B\|f\|^2$$
 
@@ -598,7 +598,7 @@ The "magic" of CNNs is actually a collection of well-defined mathematical symmet
 - **Spatial Logic**: Through **convolution**, CNNs bake the laws of physics (like translation equivariance) directly into the architecture. They "know" that a feature's meaning shouldn't change just because it moved.
 - **The Power of Depth**: **Approximation theory** shows us that by stacking simple layers, we gain an exponential advantage in representational power. We don't just learn pixels; we learn a composition of concepts.
 - **Robust Optimization**: Despite the terrifying complexity of their loss surfaces, **overparameterization** ensures that gradient descent almost always finds a clear path to a high-quality solution.
-- **Information Management**: Whether through the **Information Bottleneck** or implicit regularization, CNNs naturally learn to discard the "noise" of an image while clinging to the semantic "signal."
+- **Information Management**: Whether through the **Information Bottleneck** or implicit regularization, CNNs naturally learn to discard the "noise" of an image while clinging to the semantic "signal ".
 
 If there is one "Grand Unified Theory" for why CNNs work so well, it is this:
 
