@@ -59,7 +59,7 @@ This provides a frequency-domain interpretation of what CNN filters learn. A fil
 
 For small kernels ($k = 3, 5$), direct spatial convolution is computationally efficient. For large kernels, the Convolution Theorem suggests computing in frequency space: apply FFT, multiply elementwise, apply inverse FFT. The complexity is $\mathcal{O}(HW\log HW)$ for any kernel size versus $\mathcal{O}(HW k^2)$ for spatial convolution, making FFT-based convolution advantageous for $k > \sqrt{\log HW}$.
 
-<DIAGRAM: Four panels. Top-left: a natural image (e.g., a cat face). Top-right: its Fourier magnitude spectrum, showing concentration of energy at low frequencies. Bottom-left: a horizontal edge filter in spatial domain (3×3 Sobel-like kernel). Bottom-right: the same filter's Fourier response, showing selectivity for horizontal high frequencies. Arrows connect the spatial and frequency representations.>
+> TODO: <DIAGRAM: Four panels. Top-left: a natural image (e.g., a cat face). Top-right: its Fourier magnitude spectrum, showing concentration of energy at low frequencies. Bottom-left: a horizontal edge filter in spatial domain (3×3 Sobel-like kernel). Bottom-right: the same filter's Fourier response, showing selectivity for horizontal high frequencies. Arrows connect the spatial and frequency representations.>
 
 ### Convolution as a Structured Matrix
 
@@ -129,7 +129,7 @@ $$\text{RF}_L = 1 + \sum_{\ell=1}^L r_\ell(k-1) \quad \text{(with } r_\ell = 2^{
 
 This is central to **WaveNet** (dilated 1D convolutions for audio generation) and **DeepLab** (dilated convolutions for semantic segmentation), where large receptive fields are needed without the resolution loss of downsampling.
 
-<DIAGRAM: Side-by-side comparison of standard 3×3 convolution (receptive field = 3×3) and dilated 3×3 convolution with rate r=2 (receptive field = 5×5, same parameters). Dotted grid lines show which input pixels are sampled. Below: three stacked dilated layers with rates 1, 2, 4 showing exponentially growing effective receptive field.>
+> TODO: <DIAGRAM: Side-by-side comparison of standard 3×3 convolution (receptive field = 3×3) and dilated 3×3 convolution with rate r=2 (receptive field = 5×5, same parameters). Dotted grid lines show which input pixels are sampled. Below: three stacked dilated layers with rates 1, 2, 4 showing exponentially growing effective receptive field.>
 
 
 
@@ -241,7 +241,7 @@ $$d = \alpha^\phi, \quad w = \beta^\phi, \quad r = \gamma^\phi, \quad \text{s.t.
 
 where $\phi$ is the compound coefficient and $\alpha, \beta, \gamma$ are found by grid search at $\phi = 1$. The constraint ensures that total FLOPS scale as $2^\phi$. EfficientNet-B7 achieved state-of-the-art accuracy with 8.4× fewer parameters than competing models of similar accuracy - a triumph of principled architecture design over brute-force scaling.
 
-<DIAGRAM: A comparison of network architectures as scaled diagrams. Y-axis: ImageNet top-1 accuracy. X-axis: number of parameters (log scale). Points labeled for AlexNet, VGG-16, ResNet-50, ResNet-152, InceptionV3, EfficientNet B0-B7. EfficientNets form a clearly superior Pareto frontier.>
+> TODO: <DIAGRAM: A comparison of network architectures as scaled diagrams. Y-axis: ImageNet top-1 accuracy. X-axis: number of parameters (log scale). Points labeled for AlexNet, VGG-16, ResNet-50, ResNet-152, InceptionV3, EfficientNet B0-B7. EfficientNets form a clearly superior Pareto frontier.>
 
 
 

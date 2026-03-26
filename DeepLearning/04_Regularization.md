@@ -75,7 +75,7 @@ $$\mathcal{L}_{\text{L1}}(\theta) = \mathcal{L}(\theta) + \lambda\|\theta\|_1$$
 
 The key difference from L2 is geometric: the L1 constraint region is a **diamond** (in 2D), a cross-polytope (in higher dimensions). Unlike the sphere, the diamond has corners that sit on the coordinate axes. Loss contours (also typically smooth) are geometrically likely to first touch the diamond at one of these corners, where many coordinates are exactly zero. This is why L1 regularization produces **sparse solutions** - many weights driven to exactly zero.
 
-<DIAGRAM: The classic "diamond vs. circle" picture. A 2D parameter space (θ₁, θ₂) showing: Left panel - L1 constraint (diamond shape) and loss contours (ellipses) touching at a corner where θ₁=0. Right panel - L2 constraint (circle) and loss contours touching off-axis. The L1 sparsity and L2 shrinkage are annotated.>
+> TODO: <DIAGRAM: The classic "diamond vs. circle" picture. A 2D parameter space (θ₁, θ₂) showing: Left panel - L1 constraint (diamond shape) and loss contours (ellipses) touching at a corner where θ₁=0. Right panel - L2 constraint (circle) and loss contours touching off-axis. The L1 sparsity and L2 shrinkage are annotated.>
 
 Sparsity has deep practical value. A sparse model automatically performs **feature selection** - the zero-weight features are effectively discarded. For high-dimensional problems (many features, relatively few examples), L1 regularization identifies the small subset of features that actually matter for prediction. This interpretability benefit comes at a cost: L1 is non-differentiable at zero (the subdifferential $\partial|\theta| = [-1, 1]$ at zero), requiring either proximal gradient methods or subgradient descent.
 
@@ -120,7 +120,7 @@ The classical U-shaped test error curve has an implicit assumption: as model com
 
 3. **Modern (overparameterized) regime** ($|\theta| \gg N$): Test error decreases again as capacity grows further, eventually falling below the classical minimum. In this regime, there are infinitely many solutions with zero training error, and gradient descent selects the simplest one - the minimum norm interpolator - which generalizes well.
 
-<DIAGRAM: The double descent curve. X-axis: model complexity / number of parameters. Y-axis: test error. The curve shows a U-shape in the classical regime, a sharp spike at the interpolation threshold, and a second descent in the overparameterized regime. The two minima are labeled "Classical optimum" and "Modern optimum", with the spike labeled "Interpolation threshold".>
+> TODO: <DIAGRAM: The double descent curve. X-axis: model complexity / number of parameters. Y-axis: test error. The curve shows a U-shape in the classical regime, a sharp spike at the interpolation threshold, and a second descent in the overparameterized regime. The two minima are labeled "Classical optimum" and "Modern optimum", with the spike labeled "Interpolation threshold".>
 
 The explanation lies in implicit bias of gradient descent. When a model is overparameterized, there are infinitely many parameter configurations achieving zero training loss. Among all these, gradient descent starting from near-zero initialization is biased toward the **minimum norm solution** - the interpolator that achieves zero training error while having the smallest possible parameter values. This minimum-norm interpolator is naturally smooth and generalizes well when the true function is simple.
 

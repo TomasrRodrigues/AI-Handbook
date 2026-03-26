@@ -53,7 +53,7 @@ Multiple fixed points correspond to multiple distinct "memories" the RNN can sto
 
 **Chaos** is possible: for certain weight configurations, the RNN's trajectory is sensitive to initial conditions and inputs, making it computationally expressive but hard to control during training. The "edge of chaos" - the transition between stable and chaotic dynamics - is empirically the regime where RNNs achieve their best information processing capacity.
 
-<DIAGRAM: A state-space portrait of a simple 2D RNN. Multiple fixed points are shown as colored dots (stable attractors as filled circles, unstable points as open circles). Trajectories starting from different initial conditions are shown as curved arrows converging to different attractors. A sequence of inputs is shown perturbing the trajectory between attractors. Annotations explain the correspondence between attractors and memories.>
+> TODO: <DIAGRAM: A state-space portrait of a simple 2D RNN. Multiple fixed points are shown as colored dots (stable attractors as filled circles, unstable points as open circles). Trajectories starting from different initial conditions are shown as curved arrows converging to different attractors. A sequence of inputs is shown perturbing the trajectory between attractors. Annotations explain the correspondence between attractors and memories.>
 
 
 
@@ -125,7 +125,7 @@ The LSTM combines four learned functions, all computed from the same inputs $[h^
 
 **Hidden state**: $h^{(t)} = o^{(t)} \odot \tanh(c^{(t)})$. The output gate filters the cell state through tanh (bounding it in $(-1, 1)$) and selects which dimensions to expose.
 
-<DIAGRAM: A detailed LSTM cell diagram. Shows the four gate computations on the left (each as a sigmoid or tanh operation). The cell state c^(t) is shown as a horizontal "conveyor belt" through the top, with the forget gate as a multiplicative gate (f · c^(t-1)) and the input gate as an additive gate (i · c_tilde). The output gate extracts h^(t) from c^(t) at the right. All connections from [h^(t-1), x^(t)] are shown entering from the bottom.>
+> TODO: <DIAGRAM: A detailed LSTM cell diagram. Shows the four gate computations on the left (each as a sigmoid or tanh operation). The cell state c^(t) is shown as a horizontal "conveyor belt" through the top, with the forget gate as a multiplicative gate (f · c^(t-1)) and the input gate as an additive gate (i · c_tilde). The output gate extracts h^(t) from c^(t) at the right. All connections from [h^(t-1), x^(t)] are shown entering from the bottom.>
 
 ### The Conveyor Belt Analogy
 
@@ -283,7 +283,7 @@ The prefix scan computes all $h_t$ simultaneously using binary tree reduction, m
 
 Mamba achieves **linear scaling** in sequence length during both training and inference, with performance competitive with Transformers on language modeling benchmarks and superior on very long sequences. At sequence lengths beyond $10^4$, Mamba consistently outperforms Transformer-based models of equivalent parameter count.
 
-<DIAGRAM: A comparison diagram showing four architectures side-by-side: Vanilla RNN, LSTM, Transformer, and Mamba. For each: (1) A schematic of the computation unit, (2) Training complexity, (3) Inference complexity, and (4) Maximum effective context length (empirical). Arrows show the historical development: RNN → LSTM (gating), LSTM → Transformer (attention replaces recurrence), Transformer → Mamba (selective SSM recovers efficiency).>
+> TODO: <DIAGRAM: A comparison diagram showing four architectures side-by-side: Vanilla RNN, LSTM, Transformer, and Mamba. For each: (1) A schematic of the computation unit, (2) Training complexity, (3) Inference complexity, and (4) Maximum effective context length (empirical). Arrows show the historical development: RNN → LSTM (gating), LSTM → Transformer (attention replaces recurrence), Transformer → Mamba (selective SSM recovers efficiency).>
 
 
 

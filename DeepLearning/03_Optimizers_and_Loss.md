@@ -135,7 +135,7 @@ $$\mathcal{L}_{\text{focal}} = -\alpha_t (1 - p_t)^\gamma \log p_t$$
 
 where $p_t$ is the probability assigned to the true class, $\alpha_t$ is a class-weighting factor, and $\gamma \geq 0$ is the focusing parameter. When a model correctly classifies an example with high confidence ($p_t \to 1$), $(1-p_t)^\gamma \to 0$ and that example contributes minimally to the loss. When the model fails or is uncertain ($p_t$ small), $(1-p_t)^\gamma \approx 1$ and the loss is full-strength. This automatic focusing on hard examples is what enabled single-stage detectors like RetinaNet to match the accuracy of two-stage detectors while remaining much faster.
 
-<DIAGRAM: Three panels showing loss curves as a function of p_t (probability assigned to true class). Left: standard cross-entropy as a baseline. Center: focal loss for γ=0.5, 1, 2, 5, showing progressive flattening for easy examples (p_t near 1). Right: a visual representation of hard and easy examples in a detection task, with focal weights as circle sizes.>
+> TODO: <DIAGRAM: Three panels showing loss curves as a function of p_t (probability assigned to true class). Left: standard cross-entropy as a baseline. Center: focal loss for γ=0.5, 1, 2, 5, showing progressive flattening for easy examples (p_t near 1). Right: a visual representation of hard and easy examples in a detection task, with focal weights as circle sizes.>
 
 ### Contrastive and Metric Learning Losses
 
@@ -233,7 +233,7 @@ The default hyperparameters $\beta_1 = 0.9$, $\beta_2 = 0.999$, $\varepsilon = 1
 
 Adam's advantage over SGD with momentum comes from its per-parameter learning rates. In a typical network, different parameters have vastly different gradient statistics - some weights receive large, consistent gradients while others receive small, noisy ones. SGD with a single global learning rate is a compromise. Adam's adaptive rates allow each parameter to move at its own appropriate speed.
 
-<DIAGRAM: A 2D contour plot of a loss landscape with an elongated (elliptical) minimum. Three trajectories are shown: SGD (oscillates perpendicular to the valley), SGD+Momentum (smoother but still some oscillation), and Adam (cuts directly to the minimum). Annotations show how momentum dampens oscillations and adaptive rates correct the asymmetric scaling.>
+> TODO: <DIAGRAM: A 2D contour plot of a loss landscape with an elongated (elliptical) minimum. Three trajectories are shown: SGD (oscillates perpendicular to the valley), SGD+Momentum (smoother but still some oscillation), and Adam (cuts directly to the minimum). Annotations show how momentum dampens oscillations and adaptive rates correct the asymmetric scaling.>
 
 ### AdamW: The Weight Decay Fix
 
