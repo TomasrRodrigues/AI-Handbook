@@ -1,5 +1,4 @@
-# Chapter 6: Memory and the Flow of Time - Recurrent Networks, LSTMs, and the Architecture of Sequential Thought
-
+# Chapter 6: RNNs & LSTMs - Memory in Motion
 
 <div style="text-align: center; margin: 20px 0;">
   <p style="font-size: 1.4em; margin-bottom: 8px;">
@@ -12,303 +11,274 @@
 
 
 
+## 6.1 The Aha! Moment: Sequence Requires Memory
 
-## 6.1 When Space Becomes Time
+Every architecture we have studied has one critical limitation: **memorylessness**. Feed a CNN the same image twice, and you get the same output both times - it has no recollection of the first time. For images, this is fine: a cat photograph does not change meaning based on what photograph came before it.
 
-The world does not present itself as still photographs. Language unfolds word by word; music unfolds note by note; stock prices unfold tick by tick; a patient's health unfolds heartbeat by heartbeat. In each of these domains, the *order* of events is as meaningful as the events themselves. "The dog bit the man" and "The man bit the dog" use identical words; their meanings are opposite. The sequence is the message.
+But consider language. The sentence "The bank was steep and muddy" requires remembering that we are talking about a riverbank, not a financial institution. The word "bank" alone is ambiguous; its meaning depends on everything that came before. More generally, sequential data has **temporal structure**: the meaning of element $t$ depends on elements $t-1, t-2, \ldots$, potentially going back hundreds of steps.
 
-For a standard feedforward network - or even a CNN - this presents a fundamental barrier. These networks receive a fixed-size input and produce a fixed-size output. They have no **memory**: each forward pass is stateless, treating every input as if the world began at that moment. They are anterograde amnesics, incapable of connecting what is happening now to what happened a second ago.
+Four challenges distinguish sequential data from images:
 
-**Recurrent Neural Networks (RNNs)** solve this by introducing a **hidden state** $h^{(t)}$ - a vector that persists across time steps, encoding the network's current understanding of the sequence's history. At each step, the network reads a new input $x^{(t)}$ and updates its hidden state based on both the new input and the previous state. The hidden state is the network's working memory, and its content at any moment is a compressed summary of everything the network has read so far.
+**Temporal dependencies:** The current value depends on past values. Tomorrow's temperature depends on today's.
 
-This chapter traces the full arc: from the deceptively simple recurrence equation that defines basic RNNs, through the mathematical crisis of vanishing gradients that nearly killed the field, to the elegant gating mechanisms of LSTMs and GRUs that resolved it, and finally to the modern landscape of state space models that are rewriting the relationship between recurrence and parallelism.
+**Variable length:** Sequences do not have a fixed size. One sentence may be 5 words; another, 50.
 
+**Causality:** In real-time processing, you cannot look into the future. Your model must maintain a running "summary" of the past.
 
+**Long-range dependencies:** "The trophy would not fit in the suitcase because **it** was too big" - resolving "it" requires connecting a pronoun to a noun potentially many sentences earlier.
 
-## 6.2 The Basic Recurrence: A Dynamical System Perspective
+Standard feedforward networks fail all four: they process each input in isolation, require fixed-size input, and have no notion of "before" and "after". **Recurrent Neural Networks (RNNs)** solve this by introducing a **hidden state** - a fixed-size vector that is updated at every time step, carrying information from the past into the future.
 
-The defining equation of a vanilla (Elman) RNN is:
 
-$$h^{(t)} = \sigma\!\left(W_{hh} h^{(t-1)} + W_{xh} x^{(t)} + b_h\right)$$
 
-$$y^{(t)} = W_{hy} h^{(t)} + b_y$$
+## 6.2 The Vanilla RNN
 
-where $h^{(t)} \in \mathbb{R}^{d_h}$ is the hidden state at time $t$, $x^{(t)} \in \mathbb{R}^{d_x}$ is the input, and $y^{(t)} \in \mathbb{R}^{d_y}$ is the output. The matrices $W_{hh}$ (recurrent), $W_{xh}$ (input-to-hidden), and $W_{hy}$ (hidden-to-output) are shared across all time steps - the same "rules" apply at each moment, regardless of position in the sequence.
+### 6.2.1 The State Transition
 
-The **unrolled view** reveals the architecture's implicit depth. Substituting repeatedly:
+A vanilla (Elman) RNN maintains a **hidden state** $\mathbf{h}^{(t)} \in \mathbb{R}^{d_h}$ - a vector of $d_h$ numbers that encodes the network's "memory" of the sequence up to time $t$. At each time step, it updates this state using the current input and the previous state:
 
-$$h^{(T)} = \sigma\!\left(W_{hh} \sigma\!\left(W_{hh} \cdots \sigma\!\left(W_{hh} h^{(0)} + W_{xh} x^{(1)} + b_h\right) \cdots + W_{xh} x^{(T-1)} + b_h\right) + W_{xh} x^{(T)} + b_h\right)$$
+$$\mathbf{h}^{(t)} = \sigma\!\left(W_{hh}\, \mathbf{h}^{(t-1)} + W_{xh}\, \mathbf{x}^{(t)} + \mathbf{b}_h\right)$$
 
-The hidden state $h^{(T)}$ is a highly nonlinear function of every input $x^{(1)}, \ldots, x^{(T)}$. The network is not shallow - it is a $T$-layer deep network in time, where every layer shares the same weight matrices. Training on a sequence of 100 time steps is equivalent to training a 100-layer network with weight tying.
+Reading every symbol:
+- $\mathbf{h}^{(t)}$: the hidden state at time step $t$ - a vector with $d_h$ entries. The superscript $(t)$ indexes the time step
+- $\mathbf{h}^{(t-1)}$: the hidden state from the *previous* time step - the model's "memory" of what came before
+- $W_{hh} \in \mathbb{R}^{d_h \times d_h}$: the **recurrent weight matrix** - controls how the previous state influences the current state. The subscript $hh$ reads "hidden-to-hidden". This square matrix transforms the previous hidden state
+- $\mathbf{x}^{(t)} \in \mathbb{R}^{d_x}$: the current input at time $t$ (e.g., a word embedding)
+- $W_{xh} \in \mathbb{R}^{d_h \times d_x}$: the **input weight matrix** - controls how the current input influences the state. The subscript $xh$ reads "input-to-hidden"
+- $\mathbf{b}_h \in \mathbb{R}^{d_h}$: the bias vector
+- $\sigma$: the activation function - typically $\tanh$, which squashes values to $(-1, 1)$ to prevent the state from growing unboundedly
 
-This unrolled view also reveals the computational complexity. Forward pass: $\mathcal{O}(T \cdot (d_h^2 + d_h d_x + d_h d_y))$, dominated by the recurrent matrix multiply $W_{hh} h^{(t-1)}$. Unlike CNNs, which can parallelize across spatial positions, RNNs are **inherently sequential**: $h^{(t)}$ cannot be computed until $h^{(t-1)}$ is available. This sequential bottleneck is the central limitation that Transformers ultimately resolved.
+The output at each step:
 
-### The Dynamical Systems Interpretation
+$$\mathbf{y}^{(t)} = W_{hy}\, \mathbf{h}^{(t)} + \mathbf{b}_y$$
 
-Beyond the computational view, RNNs are best understood as **discrete-time dynamical systems**. The hidden state $h^{(t)}$ is a point in a $d_h$-dimensional state space, and the recurrence equation defines its trajectory. Understanding RNN behavior requires understanding the geometry of this trajectory.
+- $W_{hy} \in \mathbb{R}^{d_y \times d_h}$: maps the hidden state to the output space
+- $\mathbf{b}_y$: output bias
 
-**Fixed points** $h^*$ satisfy $h^* = \sigma(W_{hh}h^* + b)$ for zero input. They are the "resting positions" of the system. The stability of a fixed point is determined by the Jacobian at that point: if all eigenvalues of $J = \text{diag}(\sigma'(z^*)) W_{hh}$ have magnitude less than 1, the fixed point is a stable attractor; if any eigenvalue exceeds 1 in magnitude, it is unstable.
+**The crucial property - parameter sharing across time:** The same matrices $W_{hh}$, $W_{xh}$, $W_{hy}$ are used at *every time step*. Whether processing the first word or the hundredth, the same "rules" apply. This allows the network to handle sequences of any length with a fixed number of parameters.
 
-Multiple fixed points correspond to multiple distinct "memories" the RNN can store. The process of reading a sequence is the process of navigating among these attractors - each word or event perturbs the hidden state, and the network's "understanding" at each moment is which attractor it is currently near or approaching.
+**Analogy:** The hidden state is a mental notepad. At each step: read the new word ($W_{xh}\mathbf{x}^{(t)}$), consult your notes ($W_{hh}\mathbf{h}^{(t-1)}$), update the notepad ($\mathbf{h}^{(t)}$). The notepad has a fixed size $d_h$ - you can remember $d_h$ "aspects" of the history simultaneously.
 
-**Chaos** is possible: for certain weight configurations, the RNN's trajectory is sensitive to initial conditions and inputs, making it computationally expressive but hard to control during training. The "edge of chaos" - the transition between stable and chaotic dynamics - is empirically the regime where RNNs achieve their best information processing capacity.
+> TODO: <!-- DIAGRAM: [A horizontal chain of 5 identical RNN cells. Each cell: a box labeled "RNN Cell" with (1) an arrow entering from below labeled $\mathbf{x}^{(t)}$ (the input), (2) an arrow entering from the left labeled $\mathbf{h}^{(t-1)}$ (previous state), (3) an arrow exiting upward labeled $\mathbf{y}^{(t)}$ (output), and (4) an arrow exiting to the right labeled $\mathbf{h}^{(t)}$ (new state passed to next cell). A box on the far left labeled "Initial state $\mathbf{h}^{(0)} = \mathbf{0}$" starts the chain. Caption: "At each step, the RNN reads the current input and its own previous state, updates the state, and produces an output. The hidden state (the horizontal arrows) carries memory from past to future".] -->
 
-> TODO: <DIAGRAM: A state-space portrait of a simple 2D RNN. Multiple fixed points are shown as colored dots (stable attractors as filled circles, unstable points as open circles). Trajectories starting from different initial conditions are shown as curved arrows converging to different attractors. A sequence of inputs is shown perturbing the trajectory between attractors. Annotations explain the correspondence between attractors and memories.>
+### 6.2.2 Backpropagation Through Time (BPTT)
 
+Training an RNN uses a variant of backpropagation called **Backpropagation Through Time (BPTT)**. The key insight: "unroll" the recurrence - treat each time step as a separate layer, all sharing the same weights.
 
+For a sequence of $T$ steps and a loss at the final step $\mathcal{L}^{(T)}$ (or a sum of losses over all steps), the gradient of the loss with respect to the hidden state at time $t$ requires the chain rule across all subsequent steps:
 
-## 6.3 Backpropagation Through Time: Training in Sequence
+$$\frac{\partial \mathcal{L}}{\partial \mathbf{h}^{(t)}} = \sum_{k=t}^{T} \frac{\partial \mathcal{L}^{(k)}}{\partial \mathbf{h}^{(k)}} \cdot \prod_{j=t+1}^{k} \frac{\partial \mathbf{h}^{(j)}}{\partial \mathbf{h}^{(j-1)}}$$
 
-Training an RNN requires gradients of the loss with respect to all parameters. The algorithm is **Backpropagation Through Time (BPTT)**: mentally unroll the RNN into a $T$-layer network and apply standard backpropagation.
+Reading the product term: $\frac{\partial \mathbf{h}^{(j)}}{\partial \mathbf{h}^{(j-1)}}$ is the Jacobian of the state update - for the vanilla RNN, this is $\text{diag}(\sigma'(\mathbf{z}^{(j)})) \cdot W_{hh}$, where $\mathbf{z}^{(j)} = W_{hh}\mathbf{h}^{(j-1)} + W_{xh}\mathbf{x}^{(j)} + \mathbf{b}_h$ is the pre-activation.
 
-The total loss $\mathcal{L} = \sum_{t=1}^T \mathcal{L}^{(t)}$ sums contributions from every time step (for sequence labeling) or uses only the final step (for sequence classification). The gradient with respect to $W_{hh}$ accumulates contributions from all time steps:
+The problem: $\prod_{j=t+1}^{k}$ is a product of $k-t$ such matrices. For long sequences ($k-t$ large), this product is either vanishingly small or explosively large.
 
-$$\frac{\partial \mathcal{L}}{\partial W_{hh}} = \sum_{t=1}^T \frac{\partial \mathcal{L}^{(t)}}{\partial W_{hh}} = \sum_{t=1}^T \sum_{k=1}^t \delta^{(k)} (h^{(k-1)})^T$$
 
-where $\delta^{(k)} = \frac{\partial \mathcal{L}^{(t)}}{\partial z^{(k)}}$ is the error signal at step $k$ due to the loss at step $t$. Propagating this signal from step $t$ backward to step $k$ requires the product:
 
-$$\delta^{(k)} = \frac{\partial \mathcal{L}^{(t)}}{\partial h^{(t)}} \cdot \prod_{j=k}^{t-1} \frac{\partial h^{(j+1)}}{\partial h^{(j)}} = \frac{\partial \mathcal{L}^{(t)}}{\partial h^{(t)}} \cdot \prod_{j=k}^{t-1} \text{diag}(\sigma'(z^{(j+1)})) W_{hh}$$
+## 6.3 The Vanishing Gradient Problem in Time
 
-This product of $t - k$ copies of $\text{diag}(\sigma') W_{hh}$ is where the crisis lives.
+### 6.3.1 Why It Happens
 
-### Teacher Forcing
+Recall from Chapter 2: products of many matrices with spectral radius (largest singular value) less than 1 shrink exponentially; greater than 1, they grow exponentially.
 
-At training time, we have access to the true output at each step. **Teacher forcing** uses the ground truth $y^{(t-1)}$ as the next input rather than the model's own prediction $\hat{y}^{(t-1)}$. This stabilizes early training when the model's predictions are poor - a bad prediction at step 5 would corrupt the hidden state for all subsequent steps.
+For the vanilla RNN's Jacobian $\text{diag}(\sigma'(\mathbf{z})) \cdot W_{hh}$:
 
-The cost is **exposure bias**: at inference time, the model sees its own (potentially wrong) predictions. If the training distribution (teacher-forced) differs from the inference distribution (self-predicted), performance degrades. **Scheduled sampling** anneals the proportion of teacher forcing, gradually transitioning from 100% teacher forcing early in training to 0% later.
+**With $\tanh$ activation:** $\tanh'(z) = 1 - \tanh^2(z)$, which is at most 1 (when $z = 0$) and approaches 0 for large $|z|$. In practice, neurons often saturate (operate at large $|z|$), making the derivative close to 0.
 
+**The consequence:** For a sequence of $T$ steps with $\tanh$ activations, the gradient at step $t$ involves a product of $T-t$ factors, each typically much less than 1. For $T - t = 50$: even if each factor is 0.9, the product is $0.9^{50} \approx 0.005$ - a 200-fold reduction. For 100 steps: $0.9^{100} \approx 0.000027$ - a 37,000-fold reduction.
 
+The error signal is essentially zero by the time it reaches the early steps. **The model cannot learn that what happened 50 steps ago caused the error today.** Long-range dependencies - the most interesting and important patterns in language - are invisible.
 
-## 6.4 The Vanishing Gradient Crisis: The Mathematical Event Horizon
+### 6.3.2 Why This Is Fundamental, Not Accidental
 
-The central failure of vanilla RNNs is their inability to learn long-range dependencies. The mathematical explanation, given rigorously by Hochreiter (1991) and Bengio et al. (1994), is the exponential attenuation of gradients over time.
+Bengio et al. (1994) proved this is not a coincidence of specific activation functions or weight magnitudes. It is a fundamental mathematical tension:
 
-The product of Jacobians $\prod_{j=k}^{t-1} J_j$ where $J_j = \text{diag}(\sigma'(z^{(j+1)})) W_{hh}$ determines gradient flow. Let $\lambda_{\max}$ be the largest singular value of $W_{hh}$ and $\gamma = \max_z |\sigma'(z)|$. Then:
+- To reliably **store** information over long periods, the dynamics must be stable: perturbations to the state should not grow. This requires the Jacobian's spectral radius $< 1$ - **exactly the condition that causes vanishing gradients**.
+- To **propagate gradients** over long periods, the Jacobian's spectral radius must be $\geq 1$ - **exactly the condition that causes instability (exploding gradients)**.
 
-$$\left\|\prod_{j=k}^{t-1} J_j\right\| \leq (\lambda_{\max} \cdot \gamma)^{t-k}$$
+There is no setting of vanilla RNN parameters that can store information reliably over long sequences and also propagate gradients reliably. The architecture is fundamentally broken for long-range dependencies.
 
-For $\text{tanh}$, $\gamma \leq 1$, so $\lambda_{\max} \cdot \gamma < 1$ when $\lambda_{\max} < 1$. Over $t - k = 100$ steps, the gradient decays by $(\lambda_{\max} \gamma)^{100} \approx 0$ for any product less than 1. Early time steps receive zero gradient and the network cannot learn that any event 100 steps ago was relevant.
 
-The fundamental dilemma (Bengio et al., 1994): **storing information robustly requires the dynamics to be stable** (attractors with eigenvalues $\approx 1$), but **learning requires gradient flow** that is also $\approx 1$ in magnitude. Near an attractor, $J \approx I$ and gradients neither vanish nor explode - but this is an unstable configuration that requires fine-tuning weights to a very precise value.
 
-This is not merely a practical problem with better initialization or optimization - it is a fundamental mathematical tension built into the architecture itself.
+## 6.4 Long Short-Term Memory: Engineering Around the Problem
 
+In 1997, Hochreiter and Schmidhuber published the solution. The key insight was architectural: rather than hoping gradient descent finds weights that propagate gradients well, *redesign the architecture* to provide a gradient-friendly pathway.
 
+### 6.4.1 The Cell State: A Protected Memory Line
 
-## 6.5 Long Short-Term Memory: Engineering a Gradient Highway
+The LSTM introduces a second state variable: the **cell state** $\mathbf{c}^{(t)} \in \mathbb{R}^{d_h}$. Unlike the hidden state $\mathbf{h}^{(t)}$, the cell state evolves through primarily *additive* operations:
 
-The solution was architectural. In 1997, Hochreiter and Schmidhuber published **Long Short-Term Memory (LSTM)**, introducing a dedicated memory cell $c^{(t)}$ that is protected from the multiplicative gradient decay that plagues the hidden state.
+$$\mathbf{c}^{(t)} = \mathbf{f}^{(t)} \odot \mathbf{c}^{(t-1)} + \mathbf{i}^{(t)} \odot \tilde{\mathbf{c}}^{(t)}$$
 
-The LSTM's key insight is that the gradient of $c^{(t)}$ with respect to $c^{(t-1)}$ should be close to the **identity** - not zero, not a large eigenvalue matrix, but the identity. This is achieved through **additive** cell state updates controlled by learned gates:
+Reading:
+- $\mathbf{f}^{(t)}$: the **forget gate** - a vector of values between 0 and 1, same size as $\mathbf{c}^{(t-1)}$
+- $\odot$: element-wise multiplication - multiply corresponding entries
+- $\mathbf{f}^{(t)} \odot \mathbf{c}^{(t-1)}$: selectively "forget" parts of the old cell state. Where $f^{(t)}_j = 1$: keep memory unit $j$ fully. Where $f^{(t)}_j = 0$: erase memory unit $j$ completely
+- $\mathbf{i}^{(t)}$: the **input gate** - also between 0 and 1; selectively admits new information
+- $\tilde{\mathbf{c}}^{(t)}$: the **candidate** new content - what we *could* write into memory
+- $\mathbf{i}^{(t)} \odot \tilde{\mathbf{c}}^{(t)}$: selectively write new information into the cell state
 
-$$c^{(t)} = f^{(t)} \odot c^{(t-1)} + i^{(t)} \odot \tilde{c}^{(t)}$$
+**Why is this gradient-friendly?** The gradient of the loss with respect to $\mathbf{c}^{(t-1)}$ is:
 
-The gradient is:
+$$\frac{\partial \mathbf{c}^{(t)}}{\partial \mathbf{c}^{(t-1)}} = \text{diag}(\mathbf{f}^{(t)})$$
 
-$$\frac{\partial c^{(t)}}{\partial c^{(t-1)}} = \text{diag}(f^{(t)})$$
+Reading: this Jacobian is a *diagonal matrix* of the forget gate values. If the forget gate learns to keep $f^{(t)}_j \approx 1$ for memory unit $j$, the gradient passes through with factor 1 - unchanged. Compare to the vanilla RNN, where the Jacobian involves the full weight matrix and activation derivatives multiplied together.
 
-If the forget gate $f^{(t)} \approx \mathbf{1}$ (all ones), this Jacobian is the identity. Gradients flow backward through the cell state without attenuation. This is the **Constant Error Carousel** (Hochreiter's term) - a protected highway for gradients that bypasses the multiplicative collapse of the hidden state path.
+If the forget gate maintains $f^{(t)}_j \approx 1$ over many steps, the cell state gradient can travel back essentially unchanged across hundreds of steps. **The vanishing gradient problem is solved for the cell state.**
 
-### The Four Gates in Detail
+### 6.4.2 The Gates: Three Soft Switches
 
-The LSTM combines four learned functions, all computed from the same inputs $[h^{(t-1)}, x^{(t)}]$:
+All three gates follow the same structure - they are sigmoid-activated linear functions of the current input $\mathbf{x}^{(t)}$ and previous hidden state $\mathbf{h}^{(t-1)}$:
 
-**Forget gate** $f^{(t)} = \sigma(W_f [h^{(t-1)}, x^{(t)}] + b_f)$: Values near 0 erase the corresponding dimension of the cell state; values near 1 preserve it. The network learns to forget irrelevant past information when new information supersedes it - forget the subject of the previous sentence when a new sentence begins.
+**Forget gate:**
+$$\mathbf{f}^{(t)} = \sigma\!\left(W_f \begin{bmatrix}\mathbf{h}^{(t-1)} \\ \mathbf{x}^{(t)}\end{bmatrix} + \mathbf{b}_f\right)$$
 
-**Input gate** $i^{(t)} = \sigma(W_i [h^{(t-1)}, x^{(t)}] + b_i)$: Controls which dimensions of the candidate state to write. Values near 0 prevent new information from entering; values near 1 allow it.
+Reading:
+- $\begin{bmatrix}\mathbf{h}^{(t-1)} \\ \mathbf{x}^{(t)}\end{bmatrix}$: the concatenation of previous hidden state and current input into one long vector
+- $W_f$: weight matrix for the forget gate (shape: $d_h \times (d_h + d_x)$)
+- $\mathbf{b}_f$: bias for the forget gate
+- $\sigma(\cdot)$: sigmoid function - outputs values in $(0, 1)$, one per cell state dimension
+- **Meaning:** "Based on what I just saw and what I remember, how much of each memory unit should I keep?" A value near 1 means "keep it"; near 0 means "erase it".
 
-**Candidate state** $\tilde{c}^{(t)} = \tanh(W_c [h^{(t-1)}, x^{(t)}] + b_c)$: The proposed new content, using tanh to keep values bounded in $(-1, 1)$.
+**Input gate:**
+$$\mathbf{i}^{(t)} = \sigma\!\left(W_i \begin{bmatrix}\mathbf{h}^{(t-1)} \\ \mathbf{x}^{(t)}\end{bmatrix} + \mathbf{b}_i\right)$$
 
-**Cell state update**: $c^{(t)} = f^{(t)} \odot c^{(t-1)} + i^{(t)} \odot \tilde{c}^{(t)}$. The forget gate decides what to erase from memory; the input gate decides what new information to write. Together, they implement a learned read-write operation on the cell state.
+- **Meaning:** "Of the candidate new information, how much should I actually write into memory?" A gate between "write everything" and "write nothing".
 
-**Output gate** $o^{(t)} = \sigma(W_o [h^{(t-1)}, x^{(t)}] + b_o)$: Controls which parts of the cell state to expose as the hidden state.
+**Candidate cell content:**
+$$\tilde{\mathbf{c}}^{(t)} = \tanh\!\left(W_c \begin{bmatrix}\mathbf{h}^{(t-1)} \\ \mathbf{x}^{(t)}\end{bmatrix} + \mathbf{b}_c\right)$$
 
-**Hidden state**: $h^{(t)} = o^{(t)} \odot \tanh(c^{(t)})$. The output gate filters the cell state through tanh (bounding it in $(-1, 1)$) and selects which dimensions to expose.
+- $\tanh$: hyperbolic tangent - outputs values in $(-1, 1)$, the range of new information to potentially write
+- **Meaning:** "Based on the current input and state, what new information could be written into memory?" This is the "proposal" that the input gate then filters.
 
-> TODO: <DIAGRAM: A detailed LSTM cell diagram. Shows the four gate computations on the left (each as a sigmoid or tanh operation). The cell state c^(t) is shown as a horizontal "conveyor belt" through the top, with the forget gate as a multiplicative gate (f · c^(t-1)) and the input gate as an additive gate (i · c_tilde). The output gate extracts h^(t) from c^(t) at the right. All connections from [h^(t-1), x^(t)] are shown entering from the bottom.>
+**Cell state update:**
+$$\mathbf{c}^{(t)} = \mathbf{f}^{(t)} \odot \mathbf{c}^{(t-1)} + \mathbf{i}^{(t)} \odot \tilde{\mathbf{c}}^{(t)}$$
 
-### The Conveyor Belt Analogy
+- **Meaning:** Selectively forget old content + selectively write new content. The combination of these two terms allows the LSTM to simultaneously maintain long-term memories (keep $f_j \approx 1$ for important dimensions) and integrate new information (set $i_j$ high for relevant new content).
 
-Think of the cell state as a conveyor belt running through a factory. Information - factory products - sits on the belt and is carried forward automatically. The **forget gate** is a worker who can push products off the belt (set to zero) when they're no longer needed. The **input gate** determines which new products can be placed on the belt. The **output gate** determines which products on the belt are visible to the next department.
+**Output gate:**
+$$\mathbf{o}^{(t)} = \sigma\!\left(W_o \begin{bmatrix}\mathbf{h}^{(t-1)} \\ \mathbf{x}^{(t)}\end{bmatrix} + \mathbf{b}_o\right)$$
 
-With the conveyor belt running smoothly (forget gate $\approx 1$), information from 500 steps ago can still be on the belt when needed. This is why LSTMs can bridge dependencies that vanilla RNNs cannot: the highway for information is protected by gates that the network learns to use appropriately.
+$$\mathbf{h}^{(t)} = \mathbf{o}^{(t)} \odot \tanh\!\left(\mathbf{c}^{(t)}\right)$$
 
-### Expressiveness of LSTMs
+- **Output gate meaning:** "Of the current memory, which parts are relevant to my output right now?"
+- $\tanh(\mathbf{c}^{(t)})$: squash the cell state to $(-1, 1)$ range
+- $\mathbf{o}^{(t)} \odot \tanh(\mathbf{c}^{(t)})$: selectively read from memory to produce the visible hidden state $\mathbf{h}^{(t)}$
 
-LSTMs are strictly more computationally powerful than vanilla RNNs for discrete tasks. The cell state's additive update allows LSTMs to implement **counters** exactly - incrementing $c^{(t)}$ by 1 each time a certain input appears, and comparing to a threshold at the end. Vanilla RNNs with tanh activation cannot count exactly, because the tanh saturates as the counter value grows.
+**The LSTM has four weight matrices** ($W_f$, $W_i$, $W_c$, $W_o$), each of shape $d_h \times (d_h + d_x)$ - four times the parameters of a vanilla RNN. The additional cost buys: gradient flow over hundreds of steps, selective memory control, and the ability to learn long-range dependencies.
 
-This counting ability places LSTMs in a higher position in the Chomsky hierarchy. Vanilla RNNs can recognize **regular languages** (finite automata). LSTMs can recognize **counter languages** - including many context-free languages like balanced parentheses - making them strictly more expressive for formal language tasks.
+> TODO: <!-- DIAGRAM: [LSTM cell diagram. Three horizontal arrows enter from the left: the cell state highway $\mathbf{c}^{(t-1)}$ (at the top), the hidden state $\mathbf{h}^{(t-1)}$ (at the bottom left), and a vertical input $\mathbf{x}^{(t)}$ from below. Three $\sigma$ boxes (forget, input, output gates) and one $\tanh$ box (candidate) are shown. The cell state highway flows through two operations: a pointwise multiply by $\mathbf{f}^{(t)}$ (forget), then a pointwise add of $\mathbf{i}^{(t)} \odot \tilde{\mathbf{c}}^{(t)}$ (input). The output gate reads from the updated cell state. Right-side outputs: $\mathbf{c}^{(t)}$ (cell state highway continues) and $\mathbf{h}^{(t)}$ (visible hidden state). Caption: "The cell state highway (top path) carries long-term memory with minimal transformation. Gates are soft switches controlling what to forget, write, and output. This architecture is designed so gradient can flow backward through the cell state highway with minimal attenuation".] -->
 
 
 
-## 6.6 Gated Recurrent Units: Streamlined Memory
+## 6.5 Gated Recurrent Units: Elegant Simplification
 
-In 2014, Cho et al. introduced the **Gated Recurrent Unit (GRU)** as a simplified alternative to the LSTM. The GRU merges the cell state and hidden state into a single state $h^{(t)}$, and reduces the gate count from three to two:
+**GRU** (Cho et al., 2014) achieves similar gradient-flow properties with fewer parameters by merging the cell state and hidden state into one.
 
-**Reset gate** $r^{(t)} = \sigma(W_r [h^{(t-1)}, x^{(t)}] + b_r)$: Controls how much of the previous state enters the candidate. Setting $r = 0$ makes the candidate ignore the past entirely, computing a fresh representation from only $x^{(t)}$.
+**Update gate:**
+$$\mathbf{z}^{(t)} = \sigma\!\left(W_z \begin{bmatrix}\mathbf{h}^{(t-1)} \\ \mathbf{x}^{(t)}\end{bmatrix} + \mathbf{b}_z\right)$$
 
-**Update gate** $z^{(t)} = \sigma(W_z [h^{(t-1)}, x^{(t)}] + b_z)$: Simultaneously controls forgetting and updating. Values near 0 make the GRU ignore the candidate and retain the old state; values near 1 replace the old state with the candidate.
+**Reset gate:**
+$$\mathbf{r}^{(t)} = \sigma\!\left(W_r \begin{bmatrix}\mathbf{h}^{(t-1)} \\ \mathbf{x}^{(t)}\end{bmatrix} + \mathbf{b}_r\right)$$
 
-**Candidate state**: $\tilde{h}^{(t)} = \tanh(W [r^{(t)} \odot h^{(t-1)}, x^{(t)}] + b)$
+**Candidate hidden state:**
+$$\tilde{\mathbf{h}}^{(t)} = \tanh\!\left(W_h \begin{bmatrix}\mathbf{r}^{(t)} \odot \mathbf{h}^{(t-1)} \\ \mathbf{x}^{(t)}\end{bmatrix} + \mathbf{b}_h\right)$$
 
-**State update**: $h^{(t)} = (1 - z^{(t)}) \odot h^{(t-1)} + z^{(t)} \odot \tilde{h}^{(t)}$
+**Hidden state update:**
+$$\mathbf{h}^{(t)} = (1 - \mathbf{z}^{(t)}) \odot \mathbf{h}^{(t-1)} + \mathbf{z}^{(t)} \odot \tilde{\mathbf{h}}^{(t)}$$
 
-The gradient of $h^{(t)}$ with respect to $h^{(t-1)}$:
+Reading the update equation:
+- $(1 - \mathbf{z}^{(t)}) \odot \mathbf{h}^{(t-1)}$: keep $(1-z)$ fraction of the old state. When $z_j = 0$: keep the old state entirely; when $z_j = 1$: discard old state entirely
+- $\mathbf{z}^{(t)} \odot \tilde{\mathbf{h}}^{(t)}$: take $z$ fraction of the new candidate state
+- Together: the update gate interpolates between old state and new candidate - simultaneously performing the role of both the forget and input gates from the LSTM
 
-$$\frac{\partial h^{(t)}}{\partial h^{(t-1)}} = \text{diag}(1 - z^{(t)}) + \text{diag}(z^{(t)}) \frac{\partial \tilde{h}^{(t)}}{\partial h^{(t-1)}}$$
+**When $\mathbf{z}^{(t)} = 0$:** $\mathbf{h}^{(t)} = \mathbf{h}^{(t-1)}$ - the state is copied unchanged. Gradient flows through this step with factor 1 - no attenuation. This is the GRU's version of the LSTM's gradient highway.
 
-When $z^{(t)} \approx 0$, this Jacobian is approximately $I$ - the same constant-error-carousel property as the LSTM's cell state.
+**GRU vs. LSTM:** GRU has 3 weight matrices vs. LSTM's 4 - ~25% fewer parameters. Empirically, they perform similarly on most tasks. GRU trains faster and may generalize better on smaller datasets. LSTM sometimes performs better on very long sequences (the dedicated cell state provides a cleaner gradient path). In practice: try GRU first for efficiency, switch to LSTM if gradient flow seems insufficient.
 
-The GRU has 3 weight matrices per cell (versus 4 for the LSTM), making it approximately 25% faster. Empirically, GRU and LSTM perform comparably across most tasks, with LSTM occasionally outperforming on tasks requiring very long dependencies. The practitioner's rule: start with GRU for speed; upgrade to LSTM if necessary.
 
 
+## 6.6 Architectural Extensions
 
-## 6.7 Bidirectionality and Depth: Scaling Recurrent Networks
+### 6.6.1 Bidirectional RNNs
 
-### Bidirectional RNNs
+A standard RNN is causal: at time $t$, it only knows what came *before*. For offline tasks where the entire sequence is available (translation, sentiment analysis, protein structure prediction), information from the *future* is also available and helpful.
 
-Standard RNNs are causal - $h^{(t)}$ depends on $x^{(1)}, \ldots, x^{(t)}$ but not on future inputs. For offline tasks (processing fixed sequences like translation or sentiment classification), this is an unnecessary constraint.
+**Bidirectional RNNs** use two RNN layers:
 
-**Bidirectional RNNs (BiRNNs)** run two separate recurrent networks in opposite directions:
+$$\overrightarrow{\mathbf{h}}^{(t)} = \text{RNN}_{\text{forward}}\!\left(\mathbf{x}^{(t)}, \overrightarrow{\mathbf{h}}^{(t-1)}\right) \quad \text{(processes left to right)}$$
 
-$$\overrightarrow{h}^{(t)} = \text{RNN}_\text{fwd}(x^{(1:t)}), \qquad \overleftarrow{h}^{(t)} = \text{RNN}_\text{bkw}(x^{(T:t)})$$
+$$\overleftarrow{\mathbf{h}}^{(t)} = \text{RNN}_{\text{backward}}\!\left(\mathbf{x}^{(t)}, \overleftarrow{\mathbf{h}}^{(t+1)}\right) \quad \text{(processes right to left)}$$
 
-The final representation at position $t$ is the concatenation $[{\overrightarrow{h}^{(t)}}, {\overleftarrow{h}^{(t)}}]$, capturing context from both past and future. BiRNNs are strictly more powerful than unidirectional RNNs for any task where the label depends on both past and future context - which includes virtually all NLP tasks except real-time generation.
+$$\mathbf{h}^{(t)} = \left[\overrightarrow{\mathbf{h}}^{(t)};\, \overleftarrow{\mathbf{h}}^{(t)}\right] \quad \text{(concatenate)}$$
 
-BiRNNs are the foundation of **BERT's** encoding architecture: the "bidirectional" in BERT refers to bidirectional context in the attention mechanism, which generalizes the idea of BiRNNs to allow any position to attend to any other position.
+The concatenation $[\cdot; \cdot]$ stacks the two vectors end-to-end, doubling the hidden size. At each position, the model simultaneously has access to everything before (from the forward pass) and everything after (from the backward pass).
 
-### Deep RNNs
+**Application:** Resolving the "bank" ambiguity requires knowing what comes after "bank" - "was steep and muddy" (river) or "account was empty" (financial). Bidirectional models naturally capture this.
 
-Just as stacking CNN layers enables hierarchical spatial feature learning, stacking RNN layers enables hierarchical temporal feature learning:
+**Limitation:** Cannot be used for online prediction (where future is unknown) or autoregressive generation (where we predict the next token before it exists).
 
-$$h_\ell^{(t)} = \text{RNN}_\ell(h_{\ell-1}^{(t)}, h_\ell^{(t-1)})$$
+### 6.6.2 Multi-Layer (Deep) RNNs
 
-where $h_0^{(t)} = x^{(t)}$. The first layer extracts low-level temporal patterns; deeper layers build increasingly abstract temporal structure. A 3-layer BiLSTM is typical for competitive sequence-to-sequence tasks.
+Just as stacking CNN layers builds hierarchical visual features, stacking RNN layers builds hierarchical temporal features. In a **deep RNN** with $L$ layers:
 
-**Residual connections** are also effective for deep RNNs: $h_\ell^{(t)} = \text{RNN}_\ell(h_{\ell-1}^{(t)}) + h_{\ell-1}^{(t)}$, enabling stable training with many stacked layers.
+$$\mathbf{h}_\ell^{(t)} = f_\ell\!\left(\mathbf{h}_\ell^{(t-1)},\, \mathbf{h}_{\ell-1}^{(t)}\right)$$
 
+Reading: layer $\ell$'s hidden state at time $t$ depends on its own previous state (temporal memory) and the output of the layer below (the input from the lower layer). Layer 1 receives the actual input $\mathbf{x}^{(t)}$; each subsequent layer receives the hidden state of the layer below.
 
+**What each layer learns:** Lower layers capture fine-grained temporal patterns (character sequences, local syntax). Higher layers capture abstract semantic content (topics, discourse structure). Neural machine translation models from 2016–2017 used 4–8-layer stacked LSTMs - before Transformers made them obsolete.
 
-## 6.8 Sequence-to-Sequence: The Architecture of Translation
+### 6.6.3 From RNNs to Attention: The Bridge
 
-Many of the most valuable sequence tasks involve mapping one sequence to another of different length - translation, summarization, question answering. The standard architecture is the **Encoder-Decoder** (Sutskever et al., 2014; Cho et al., 2014):
+Even with LSTMs, a bottleneck problem remained for sequence-to-sequence tasks (like translation). The **encoder** processes the source sentence and compresses its meaning into a single hidden vector $\mathbf{h}^{(T)}$. The **decoder** must reconstruct the translation from this single vector - a challenging compression for long sentences.
 
-**Encoder**: An RNN reads the source sequence $x^{(1:T_x)}$ and produces a **context vector** $c = h_{\text{enc}}^{(T_x)}$ - the final hidden state encoding the entire source.
+**Attention mechanisms** (Bahdanau et al., 2015) solved this by allowing the decoder to "look back" at all encoder hidden states:
 
-**Decoder**: A separate RNN is initialized with $c$ and generates the target sequence $y^{(1:T_y)}$ autoregressively - each output token becomes the input for the next step.
+$$\mathbf{context}^{(s)} = \sum_{t=1}^{T} \alpha^{(s,t)}\, \mathbf{h}^{(t)}_{\text{enc}}$$
 
-$$h_{\text{dec}}^{(t)} = \text{RNN}_\text{dec}(h_{\text{dec}}^{(t-1)}, y^{(t-1)}, c), \qquad y^{(t)} \sim \text{softmax}(W_{hy} h_{\text{dec}}^{(t)})$$
+where:
 
-The bottleneck is the context vector $c$: a fixed-size vector encoding an entire variable-length sequence. For long sequences, this bottleneck causes information loss - the final hidden state cannot reliably encode all relevant information from the beginning of the source.
+$$\alpha^{(s,t)} = \frac{\exp(e(d^{(s)}, \mathbf{h}^{(t)}_{\text{enc}}))}{\sum_{t'=1}^{T} \exp(e(d^{(s)}, \mathbf{h}^{(t')}_{\text{enc}}))}$$
 
+Reading:
+- $\alpha^{(s,t)}$: the attention weight at decoder step $s$ for encoder step $t$ - how much the decoder "attends to" encoder position $t$ while generating output word $s$
+- $e(d^{(s)}, \mathbf{h}^{(t)}_{\text{enc}})$: a scalar "alignment score" between the current decoder state $d^{(s)}$ and encoder state $\mathbf{h}^{(t)}_{\text{enc}}$ - typically a dot product or small neural network
+- The $\exp(\cdot)$ and normalization: convert scores to probabilities (all $\alpha^{(s,t)} \geq 0$, sum to 1 over $t$) using the softmax formula
+- $\mathbf{context}^{(s)}$: a weighted sum of all encoder states - a "dynamic context" that highlights the source positions most relevant to the current output position
 
+This mechanism proved so powerful that in 2017, Vaswani et al. asked: what if we removed the recurrence entirely and used *only* attention? The result was the Transformer - the subject of later chapters.
 
-## 6.9 Attention: Breaking the Bottleneck
 
-The **attention mechanism** (Bahdanau et al., 2015) resolves the context bottleneck by allowing the decoder to "look back" at all encoder hidden states, weighting them by relevance to the current decoding step.
 
-At each decoder step $t$, the attention mechanism computes:
+## 6.7 Practical Considerations
 
-**Attention scores**: $e_i^{(t)} = \text{score}(h_{\text{dec}}^{(t)}, h_{\text{enc}}^{(i)})$ for each encoder position $i$.
+### 6.7.1 Gradient Clipping (Revisited for RNNs)
 
-**Attention weights**: $\alpha_i^{(t)} = \frac{\exp(e_i^{(t)})}{\sum_{j} \exp(e_j^{(t)})}$
+Exploding gradients are especially common in RNNs because the same weight matrix $W_{hh}$ is multiplied many times. The standard remedy: clip the gradient norm before the parameter update.
 
-**Context vector**: $c^{(t)} = \sum_i \alpha_i^{(t)} h_{\text{enc}}^{(i)}$
+$$\text{if } \|\mathbf{g}\|_2 > \tau: \quad \mathbf{g} \leftarrow \frac{\tau}{\|\mathbf{g}\|_2}\, \mathbf{g}$$
 
-The context vector is now dynamic - it is a different weighted average of encoder states at each decoder step. When generating the word "apple" in French, the attention can focus on the encoder state corresponding to the English "apple", regardless of its position in the source sentence. The bottleneck is eliminated; the gradient path from decoder to encoder is now just one step, resolving the long-range dependency problem.
+For RNNs, $\tau = 1.0$ or $\tau = 5.0$ is typical. This is not a substitute for a good architecture (LSTMs still vastly outperform clipped vanilla RNNs for long sequences) - it is a safety mechanism that prevents catastrophic parameter updates when they occasionally occur.
 
-Three scoring functions became standard:
+### 6.7.2 Truncated BPTT
 
-$$e_i^{(t)} = \begin{cases} v^T \tanh(W_1 h_{\text{dec}}^{(t)} + W_2 h_{\text{enc}}^{(i)}) & \text{(Additive / Bahdanau)} \\ h_{\text{dec}}^{(t)T} W h_{\text{enc}}^{(i)} & \text{(Multiplicative / Luong)} \\ h_{\text{dec}}^{(t)T} h_{\text{enc}}^{(i)} / \sqrt{d_k} & \text{(Scaled Dot-Product / Transformer)} \end{cases}$$
+For very long sequences (books, long audio), full BPTT is computationally infeasible: computing gradients back through 100,000 steps would require storing 100,000 copies of the hidden state.
 
-The scaled dot-product attention, used in Transformers, is the most computationally efficient - the scaling by $\sqrt{d_k}$ prevents dot products from growing large in high dimensions, where the gradient of softmax becomes small.
+**Truncated BPTT** processes the sequence in chunks of length $k$ (typically 20–100 steps):
+- Forward pass: carry the hidden state forward across chunks (the model sees the full sequence)
+- Backward pass: cut off after $k$ steps (gradients only flow back within each chunk)
 
-**Self-attention** is the final evolution: apply attention between all positions within the same sequence. Instead of an encoder attending to decoder, every position attends to every other position:
+Effect: the model can leverage context from the entire sequence (through the carried-forward hidden state) but can only learn dependencies up to $k$ steps back (through gradient flow). Choosing $k$ balances memory/computation against long-range learning capability.
 
-$$\text{SelfAttention}(X) = \text{softmax}\!\left(\frac{XW^Q(XW^K)^T}{\sqrt{d_k}}\right) XW^V$$
+### 6.7.3 The Remaining Role of RNNs
 
-Self-attention connects any two positions in a sequence in a single step, regardless of their distance - the fundamental advantage that enabled Transformers to succeed where RNNs struggled. The "Attention Is All You Need" paper (Vaswani et al., 2017) showed that stacking self-attention with feedforward layers, without any recurrence, outperforms RNNs on translation benchmarks. This was the beginning of the Transformer era.
+With Transformers dominating sequence modeling benchmarks, one might declare RNNs obsolete. This would be premature:
 
+**Online/streaming tasks:** Processing a live audio stream or sensor feed requires generating outputs as each element arrives, without access to future elements. RNNs compute each step in $O(d_h^2)$ time regardless of total sequence length. Transformers require $O(T \cdot d)$ per step (caching all previous keys/values), growing with sequence length.
 
+**Memory efficiency at inference:** Generating text token by token, a Transformer's memory grows as $O(T)$ (the KV cache). An LSTM's memory is $O(d_h)$ - constant regardless of sequence length. For very long generation contexts, LSTMs are dramatically more memory-efficient.
 
-## 6.10 Computational Complexity and the Case for Recurrence
-
-The transition from RNNs to Transformers came at a cost: computational complexity. For a sequence of length $T$ and hidden dimension $d$:
-
-| Model | Training complexity | Inference per step |
-|-------|--------------------|--------------------|
-| Vanilla RNN | $\mathcal{O}(T \cdot d^2)$ (sequential) | $\mathcal{O}(d^2)$ |
-| LSTM | $\mathcal{O}(T \cdot 4d^2)$ (sequential) | $\mathcal{O}(4d^2)$ |
-| Transformer | $\mathcal{O}(T^2 \cdot d)$ (parallelizable) | $\mathcal{O}(T \cdot d)$ |
-
-The Transformer's $T^2$ complexity means that doubling the sequence length quadruples the compute. For short sequences, this is manageable. For sequences of length $T = 10{,}000$ (a short book, a long audio file, a genomic sequence), the quadratic cost becomes prohibitive.
-
-RNNs scale linearly in $T$ and process each step with constant memory - no growing KV cache. For applications requiring **streaming inference** (processing real-time data as it arrives), or **very long sequences** (up to millions of tokens), the recurrent architecture's linear scaling makes it the only practical choice.
-
-This observation motivated the modern return to recurrent architectures, but with a critical upgrade: making them parallelizable during training.
-
-
-
-## 6.11 State Space Models: Recurrence Made Parallel
-
-**State Space Models (SSMs)** bridge the gap between RNNs (efficient inference) and Transformers (efficient training). They begin from the continuous-time perspective:
-
-$$\frac{dh}{dt} = Ah(t) + Bx(t), \qquad y(t) = Ch(t) + Dx(t)$$
-
-where $h(t) \in \mathbb{R}^N$ is the state, $x(t) \in \mathbb{R}$ the input, $y(t) \in \mathbb{R}$ the output, and $A, B, C, D$ are learned matrices. Discretizing with step size $\Delta$ (via zero-order hold):
-
-$$h_t = \bar{A} h_{t-1} + \bar{B} x_t, \qquad y_t = Ch_t$$
-
-$$\bar{A} = e^{\Delta A} \approx (I - \Delta A/2)^{-1}(I + \Delta A/2), \qquad \bar{B} = (\Delta A)^{-1}(e^{\Delta A} - I)B \approx \Delta B$$
-
-This looks exactly like a linear RNN. Its remarkable property: the linear recurrence $y_t = \sum_{k=0}^{t} \bar{C}\bar{A}^k \bar{B} \cdot x_{t-k}$ can be computed as a **convolution** $y = K * x$ where $K_k = \bar{C}\bar{A}^k\bar{B}$. Convolutions are parallelizable via FFT, enabling training in $\mathcal{O}(T \log T)$ rather than $\mathcal{O}(T)$ sequential steps.
-
-The **S4** architecture (Gu et al., 2021) exploits specific matrix structure - HiPPO (High-Order Polynomial Projection Operators) initialization of $A$ - to make this computation efficient and stable. HiPPO matrices are designed to retain information about the history at all timescales equally, giving the SSM a kind of idealized long-term memory.
-
-### Mamba: Selective State Spaces
-
-The limitation of fixed SSMs is that the matrices $A, B, C$ are input-independent - they apply the same update rule regardless of what the current token is. This prevents the model from "selecting" which information to keep and which to discard based on content.
-
-**Mamba** (Gu & Dao, 2023) makes $B$, $C$, and $\Delta$ functions of the input:
-
-$$B_t = B(x_t), \qquad C_t = C(x_t), \qquad \Delta_t = \Delta(x_t)$$
-
-This **selective** mechanism allows the model to decide, at each step, how much of the current input to incorporate into the state and how to read out the state. The selectivity is analogous to LSTM gating - it allows the model to filter irrelevant information and focus on task-relevant content.
-
-The challenge: input-dependent matrices break the convolution trick. Mamba overcomes this with a parallel scan algorithm (**prefix sum**) that computes the full state sequence in $\mathcal{O}(T)$ parallel steps:
-
-$$h_t = \bar{A}_t h_{t-1} + \bar{B}_t x_t \implies h_t = \sum_{k=0}^t \left(\prod_{j=k+1}^t \bar{A}_j\right) \bar{B}_k x_k$$
-
-The prefix scan computes all $h_t$ simultaneously using binary tree reduction, maintaining $\mathcal{O}(T)$ total work with $\mathcal{O}(\log T)$ parallelism.
-
-Mamba achieves **linear scaling** in sequence length during both training and inference, with performance competitive with Transformers on language modeling benchmarks and superior on very long sequences. At sequence lengths beyond $10^4$, Mamba consistently outperforms Transformer-based models of equivalent parameter count.
-
-> TODO: <DIAGRAM: A comparison diagram showing four architectures side-by-side: Vanilla RNN, LSTM, Transformer, and Mamba. For each: (1) A schematic of the computation unit, (2) Training complexity, (3) Inference complexity, and (4) Maximum effective context length (empirical). Arrows show the historical development: RNN → LSTM (gating), LSTM → Transformer (attention replaces recurrence), Transformer → Mamba (selective SSM recovers efficiency).>
-
-
-
-## 6.12 Generalization Theory for Sequential Models
-
-For sequential models, generalization theory faces a new challenge: the Rademacher complexity of an RNN depends on the spectral properties of $W_{hh}$ applied $T$ times. Specifically:
-
-$$\hat{R}_N(\mathcal{H}_{\text{RNN}}) \leq \frac{\|W_{hh}\|_2^T \cdot \|W_{xh}\|_F}{N^{1/2}} \cdot \sqrt{\ln d_h}$$
-
-The factor $\|W_{hh}\|_2^T$ grows exponentially in $T$ unless $\|W_{hh}\|_2 \leq 1$. Constraining the spectral norm of the recurrent matrix to at most 1 (via spectral normalization or orthogonal initialization) keeps the complexity bound tight, explaining why such constraints improve generalization in practice.
-
-**Weight sharing** across time steps is itself a powerful implicit regularization. An unshared $T$-layer network has $T$ times as many parameters; the shared RNN is forced to learn *universal rules* that apply at any position. This constraint directly reduces the effective hypothesis class size, tightening the PAC bound.
-
-Dropout applied recurrently - the same mask used at all time steps (Gal & Ghahramani, 2016) - provides Bayesian approximate inference and maintains the weight-sharing regularization while adding variance reduction through ensemble effects.
-
-
-
-## 6.13 Information Theory of Sequences: Compression as Intelligence
-
-An RNN trained on language modeling is fundamentally a **compression engine**. The objective - maximizing log-likelihood - is equivalent to minimizing the description length of the sequence under the model. A model that achieves lower cross-entropy is a more efficient compressor.
-
-**Perplexity** $= \exp(\text{avg. cross-entropy bits per token})$ is the standard evaluation metric. It represents the effective branching factor - at perplexity 50, the model is as confused as if it had to choose uniformly among 50 equally likely next tokens. English text has an empirical entropy rate of approximately 1-1.5 bits per character; a model that achieves this perplexity has essentially "understood" English structure.
-
-**Mutual information** $I(h^{(t)}; x^{(\tau)})$ for $\tau \ll t$ measures how much information about the distant past is retained in the current hidden state. For vanilla RNNs, this mutual information decays exponentially with $t - \tau$. For LSTMs, the decay is much slower - close to constant for the information gated into the cell state. For Transformers, *all* pairs of positions have $\mathcal{O}(1)$ mutual information, bounded away from zero, because any position can attend directly to any other. This is the information-theoretic explanation for why Transformers outperform RNNs on tasks requiring long-range dependencies.
-
+**Embedded systems:** Mobile devices and microcontrollers cannot run large Transformer models. LSTMs with small $d_h$ are deployable on hardware with kilobytes of RAM.
 
 
 ## Summary
@@ -326,6 +296,9 @@ The key developments:
 **Attention and Transformers** (Bahdanau et al., 2015; Vaswani et al., 2017) replaced recurrence with direct position-to-position connections, eliminating sequential bottlenecks and enabling parallelization. The cost was quadratic complexity in sequence length.
 
 **State space models** (Gu et al., 2021) and **Mamba** (Gu & Dao, 2023) returned to recurrent principles but with parallelizable training via convolution and prefix scans, achieving linear scaling while recovering strong performance on long-context tasks.
+
+*Sequential data required memory (RNNs). Spatial data required local filters (CNNs). What about learning the structure of data itself - not just recognizing patterns, but generating new examples? That requires generative models: autoencoders and VAEs, the subject of Chapter 7.*
+
 
 Chapter 7 steps back from temporal modeling to consider a different fundamental question: not how to predict sequences, but how to learn *representations* - compact, structured codes that capture the essential content of complex, high-dimensional data.
 

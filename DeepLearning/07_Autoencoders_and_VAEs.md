@@ -1,587 +1,342 @@
-# Autoencoders and Variational Autoencoders (VAEs)
+# Chapter 7: Autoencoders & VAEs - Learning to Compress and Create
 
-#### Table of Contents
+> *"All models are wrong, but some are useful. A generative model is wrong in a way that reveals the structure of reality".*
+> - after George Box
 
-1. [Introduction](#introduction)
-2. [Mathematical Properties](#mathematical-properties)
-3. [Classical Autoencoders](#classical-autoencoders)
-4. [Regularized Autoencoders](#regularized-autoencoders)
-5. [Variational Autoencoders](#variational-autoencoders---probabilistic-foundation)
-6. [VAE Variants and Extensions](#vae-variants-and-extensions)
-7. [Applications](#applications)
-8. [Theoretical Connections](#theoretical-connections)
-9. [Conclusion](#conclusion)
 
-## Introduction
 
-Modern machine learning confronts data of staggering dimensionality - a single HD video frame occupies millions of dimensions, and domains like medical imaging, genomics, and sensor networks produce observations that defy human intuition.
+## 7.1 The Aha! Moment: From Prediction to Understanding
 
-Yet despite this, a profound insight underlies machine learning's success: **real-world data does not uniformly occupy the ambient high-dimensional space.** A random point in $\mathbb{R}^{65{,}536}$ is extraordinarily unlikely to be a natural image. Most configurations of pixel values represent pure noise - statistically independent, with no coherent structure. Natural images, by contrast, exhibit strong regularities: smooth regions, abrupt edges, repeating textures, recognizable shapes. These constraints mean they occupy a tiny, highly structured subset of pixel space.
+Every architecture we have studied so far is **discriminative**: given an input, produce a label or prediction. A CNN classifies images. An LSTM predicts the next token. These models learn $p(y | \mathbf{x})$ - the probability of the output *given* the input.
 
-This observation crystallizes in the **manifold hypothesis**: high-dimensional data concentrates near *low-dimensional manifolds* embedded within the ambient space. A manifold is a geometric structure that locally resembles Euclidean space but may have complex global shape - like the surface of a sphere, which is 2D yet curves through 3D. Similarly, natural images form a manifold whose *intrinsic dimensionality* (meaningful degrees of freedom) is far smaller than the pixel count.
+But there is a deeper question: *What does the data itself look like?* What is the structure of the space of natural images? What makes one image "realistic" and another "garbage"? Answering this requires learning the data distribution $p(\mathbf{x})$ itself - not conditioned on any label, but as a model of the world.
 
-This is why learning is possible despite the curse of dimensionality. If data lies on a $d$-dimensional manifold with $d \ll D$, sample complexity depends on $d$, not $D$ - we need only enough samples to cover the manifold.
+This is the domain of **generative models**. A generative model that has truly learned $p(\mathbf{x})$ can:
 
-**Autoencoders** emerge naturally from this hypothesis. They are neural network architectures designed to learn compact representations by discovering underlying manifold structure. The architecture has two coupled components:
-- **Encoder** $E_\phi: \mathbb{R}^D \to \mathbb{R}^d$ - maps high-dimensional input $\mathbf{x}$ to low-dimensional code $\mathbf{z} = E_\phi(\mathbf{x})$
-- **Decoder** $D_\theta: \mathbb{R}^d \to \mathbb{R}^D$ - reconstructs $\hat{\mathbf{x}} = D_\theta(\mathbf{z})$ from the code
+1. **Generate new examples:** Sample $\mathbf{x} \sim p(\mathbf{x})$ to produce novel, realistic data
+2. **Compress:** Encode $\mathbf{x}$ into a compact representation, decode when needed
+3. **Detect anomalies:** If $p(\mathbf{x})$ is very low for a new example, that example is unusual
+4. **Understand structure:** Discover the underlying "degrees of freedom" - the factors that govern what the data looks like
 
-The complete autoencoder is the composition $\hat{\mathbf{x}} = (D_\theta \circ E_\phi)(\mathbf{x})$, approximating the identity through a dimensional bottleneck. Training minimizes reconstruction error:
+The **Autoencoder** is the architecturally simplest generative model: force the network to reconstruct its own input after passing through a bottleneck. The bottleneck forces discovery of compact, informative representations. The **Variational Autoencoder (VAE)** extends this with probabilistic rigor, enabling principled generation of new examples.
 
-$$\min_{\phi,\theta}\; \mathbb{E}_{\mathbf{x} \sim p_\text{data}}\left[\ell\!\left(\mathbf{x},\, D_\theta(E_\phi(\mathbf{x}))\right)\right]$$
 
-where $\ell$ is typically **MSE** $\|\mathbf{x} - \hat{\mathbf{x}}\|^2$ for continuous data or **binary cross-entropy** for binary data.
 
-After training, the decoder's range $D_\theta(\mathbb{R}^d)$ approximates the data manifold $\mathcal{M}$: on-manifold points reconstruct well; off-manifold points reconstruct poorly.
+## 7.2 Why Compression Is Possible: The Manifold Hypothesis
 
+Before diving into architectures, we need to understand *why* compression is possible at all.
 
+A $256 \times 256$ RGB image has $256 \times 256 \times 3 = 196{,}608$ pixels. A random assignment of intensities to these pixels is almost certainly visual noise - no recognizable structure. The probability of a random point in this $196{,}608$-dimensional space being a natural image is essentially zero.
 
-## Mathematical Properties
+Natural images are highly constrained: smooth regions, consistent lighting, coherent shapes, recognizable objects. These constraints mean natural images occupy a tiny, structured subset of the full pixel space.
 
-### Calculus
+This is the **manifold hypothesis**: high-dimensional data concentrates near a low-dimensional **manifold** embedded in the ambient space.
 
-Autoencoder training reduces to optimization - finding parameters minimizing reconstruction error - which requires computing gradients with respect to millions of parameters.
+**What is a manifold?** Intuitively, a surface that is locally flat but may curve globally. The surface of a sphere is a 2-dimensional manifold embedded in 3-dimensional space - locally flat (any small patch looks like a flat plane), but globally curved. Natural images form a manifold whose **intrinsic dimensionality** (the number of meaningful degrees of freedom - pose, identity, lighting, etc.) is far smaller than the pixel count.
 
-#### Derivatives and Rates of Change
+**Why this enables compression:** If data lies on a $d$-dimensional manifold, we only need $d$ numbers to specify a point - not $D$ (the full ambient dimension). An autoencoder attempts to learn these $d$ numbers (a coordinate system for the manifold) and the mapping back from them to the full $D$-dimensional data.
 
-The derivative $f'(x)$ measures the instantaneous rate of change of $f$ at $x$. It tells us how to adjust parameters to reduce loss:
-- If $\ell'(\theta) > 0$: increasing $\theta$ increases loss → decrease $\theta$
-- If $\ell'(\theta) < 0$: decreasing $\theta$ increases loss → increase $\theta$
-- The magnitude $|\ell'(\theta)|$ measures sensitivity
 
-The gradient descent update formalizes this:
 
-$$\theta_{t+1} = \theta_t - \eta\, \ell'(\theta_t)$$
+## 7.3 Classical Autoencoders
 
-Common activation derivatives (essential for backpropagation):
-- **Sigmoid**: $\sigma'(z) = \sigma(z)(1 - \sigma(z))$ - expressible from its own output
-- **Tanh**: $\tanh'(z) = 1 - \tanh^2(z)$ - same property
-- **ReLU**: $\text{ReLU}'(z) = \mathbf{1}[z > 0]$ - zero for negative inputs, one otherwise
+### 7.3.1 Architecture and Objective
 
-#### Multivariable Calculus and Partial Derivatives
+An autoencoder has two components:
+- **Encoder** $E_\phi: \mathbb{R}^D \to \mathbb{R}^d$: maps input $\mathbf{x}$ to latent code $\mathbf{z} = E_\phi(\mathbf{x})$
+- **Decoder** $D_\theta: \mathbb{R}^d \to \mathbb{R}^D$: reconstructs $\hat{\mathbf{x}} = D_\theta(\mathbf{z})$ from the code
 
-For $f: \mathbb{R}^n \to \mathbb{R}$, the partial derivative $\partial f/\partial x_i$ measures change when varying only $x_i$. The **gradient** collects all partials:
+The subscripts $\phi$ and $\theta$ denote the parameters of the encoder and decoder respectively. The input $\mathbf{x} \in \mathbb{R}^D$ is high-dimensional; the latent code $\mathbf{z} \in \mathbb{R}^d$ is low-dimensional ($d \ll D$).
 
-$$\nabla f = \left[\frac{\partial f}{\partial x_1}, \ldots, \frac{\partial f}{\partial x_n}\right]^\top$$
+Training minimizes reconstruction error:
 
-It points in the direction of steepest ascent; $-\nabla f$ is steepest descent. For small displacement $\Delta \mathbf{x}$:
+$$\min_{\phi,\, \theta}\; \frac{1}{N}\sum_{i=1}^{N} \ell\!\left(\mathbf{x}^{(i)},\, D_\theta\!\left(E_\phi(\mathbf{x}^{(i)})\right)\right)$$
 
-$$f(\mathbf{x} + \Delta\mathbf{x}) \approx f(\mathbf{x}) + \nabla f(\mathbf{x}) \cdot \Delta\mathbf{x}$$
+Reading:
+- $\min_{\phi, \theta}$: find encoder parameters $\phi$ and decoder parameters $\theta$ that minimize
+- $\frac{1}{N}\sum_{i=1}^{N}$: average over all $N$ training examples
+- $\ell(\mathbf{x}^{(i)}, D_\theta(E_\phi(\mathbf{x}^{(i)})))$: the loss between original $\mathbf{x}^{(i)}$ and its reconstruction $D_\theta(E_\phi(\mathbf{x}^{(i)}))$
+  - For continuous data: $\ell = \|\mathbf{x} - \hat{\mathbf{x}}\|_2^2$ (MSE)
+  - For binary data (pixel values in $\{0, 1\}$): $\ell = $ binary cross-entropy
 
-For vector-valued functions $f: \mathbb{R}^n \to \mathbb{R}^m$, the **Jacobian** $J_f \in \mathbb{R}^{m \times n}$ contains all first-order partials: $(J_f)_{ij} = \partial f_i / \partial x_j$. Each layer's derivative is a Jacobian - for $\mathbf{a} = \sigma(W\mathbf{x} + \mathbf{b})$, the Jacobian w.r.t. $\mathbf{x}$ is $\text{diag}(\sigma'(W\mathbf{x}+\mathbf{b})) \cdot W$.
+**The bottleneck as information pressure:** The key constraint is $d \ll D$. With $d = 32$ and $D = 784$ (MNIST), the compression ratio is $24.5\times$. The encoder must compress all useful information about the input into 32 numbers. Information that cannot fit - noise, irrelevant variation - is discarded. The decoder must reconstruct the input from these 32 numbers alone.
 
-#### The Chain Rule
+This information pressure forces the autoencoder to discover the most important "axes of variation" in the data - exactly the manifold structure we were looking for.
 
-The chain rule is the mathematical engine powering backpropagation. For compositions $h = g \circ f$:
+> TODO: <!-- DIAGRAM: [A "bowtie" or "hourglass" shaped diagram. Left side: a wide block labeled "Input $\mathbf{x} \in \mathbb{R}^{784}$" (MNIST example). Tapering through several layers to a narrow "neck" labeled "Latent Code $\mathbf{z} \in \mathbb{R}^{32}$" with a note "$d \ll D$". Widening back out through mirrored layers to "Reconstruction $\hat{\mathbf{x}} \in \mathbb{R}^{784}$". Arrow below showing "Encoder $E_\phi$" on the left half and "Decoder $D_\theta$" on the right half. At the bottom: loss $\ell(\mathbf{x}, \hat{\mathbf{x}})$ comparing input to reconstruction. Caption: "The bottleneck forces information compression. The 32-dimensional latent code must contain everything needed to reconstruct the 784-dimensional input - the most efficient possible summary".] -->
 
-$$J_h = J_g \cdot J_f$$
+### 7.3.2 Connection to PCA: The Linear Case
 
-For a $L$-layer network $h = f_L \circ \cdots \circ f_1$:
+**Principal Component Analysis (PCA)** is the classical linear dimensionality reduction technique. It finds the $d$-dimensional linear subspace (hyperplane through the origin) minimizing expected squared reconstruction error.
 
-$$J_h = J_{f_L} \cdots J_{f_2} J_{f_1}$$
+A celebrated theorem (Baldi & Hornik, 1989):
 
-**Backward mode** (backpropagation) computes this product right-to-left, reusing intermediate results. This is efficient when we have *many parameters but few outputs* (a scalar loss): all gradients are computed in a single backward pass, each step costing $O(n)$ for an $n$-dimensional layer.
+**Theorem:** *A linear autoencoder - encoder and decoder both using no activation function (pure linear transformations) - converges to the PCA solution at any global optimum, regardless of initialization.*
 
-#### Second Derivatives and the Hessian
+Reading "linear autoencoder": encoder is $\mathbf{z} = W_e \mathbf{x}$ (no activation, just matrix multiply); decoder is $\hat{\mathbf{x}} = W_d \mathbf{z}$ (no activation). The composition is $\hat{\mathbf{x}} = W_d W_e \mathbf{x}$ - a rank-$d$ approximation of the identity.
 
-The **Hessian** $H \in \mathbb{R}^{n \times n}$ contains all second-order partials ($H_{ij} = \partial^2 f / \partial x_i \partial x_j$) and characterizes local curvature. At a critical point where $\nabla f = 0$:
-- $H$ **positive definite** → local minimum
-- $H$ **negative definite** → local maximum
-- $H$ **indefinite** (mixed eigenvalues) → saddle point
+**Significance:** PCA is optimal among all linear methods. Autoencoders generalize PCA to *nonlinear* methods: with ReLU or tanh activations, the encoder and decoder can represent curved coordinate systems on the data manifold, capturing structure that no linear method could represent.
 
-Large positive eigenvalues indicate steep curvature (narrow valleys); small eigenvalues indicate flat regions. Second-order methods like Newton's method exploit Hessian information: $\mathbf{x}_{t+1} = \mathbf{x}_t - H^{-1}\nabla f(\mathbf{x}_t)$. In practice, computing and inverting $H$ is $O(n^3)$ and prohibitive at scale - **quasi-Newton methods** (e.g., L-BFGS) approximate it from recent gradients.
+Concretely: points on a circle in $\mathbb{R}^2$ are intrinsically 1-dimensional (parameterized by angle), but a linear autoencoder cannot represent this - the best rank-1 linear approximation just projects onto a line through the origin, losing the circular structure. A nonlinear autoencoder can learn to encode angle and decode back to $(x, y) = (\cos\theta, \sin\theta)$ - perfectly representing the manifold.
 
+### 7.3.3 Regularized Autoencoders
 
+**Sparse autoencoders** add an L1 penalty on the latent activations:
 
-### Linear Algebra
+$$\mathcal{L} = \underbrace{\|\mathbf{x} - \hat{\mathbf{x}}\|^2}_{\text{reconstruction}} + \underbrace{\lambda \|\mathbf{z}\|_1}_{\text{sparsity penalty}}$$
 
-Neural networks implement linear transformations composed with nonlinearities, making linear algebra their natural computational language.
+Reading the penalty: $\|\mathbf{z}\|_1 = \sum_j |z_j|$ - the L1 norm of the latent code. Most entries of $\mathbf{z}$ are driven to zero; only a few are active for any given input. This forces the model into the overcomplete regime ($d > D$) while preventing trivial identity solutions. Sparse overcomplete autoencoders trained on natural images learn Gabor-filter-like features resembling V1 simple cells - a surprising bridge between deep learning and neuroscience.
 
-#### Vectors, Dot Products, and Norms
+**Denoising autoencoders** corrupt the input before encoding, then train to reconstruct the clean original:
 
-A vector $\mathbf{x} \in \mathbb{R}^n$ represents features (e.g., flattening a $28\times28$ image to $\mathbb{R}^{784}$). The **dot product** $\mathbf{x} \cdot \mathbf{y} = \mathbf{x}^\top \mathbf{y}$ measures alignment - positive means same direction, negative means opposite, zero means orthogonal.
+$$\min_{\phi, \theta}\; \mathbb{E}_{\mathbf{x}}\,\mathbb{E}_{\tilde{\mathbf{x}}|\mathbf{x}}\!\left[\|\mathbf{x} - D_\theta(E_\phi(\tilde{\mathbf{x}}))\|^2\right]$$
 
-Key norms:
-- **Euclidean (L2)**: $\|\mathbf{x}\|_2 = \sqrt{\sum_i x_i^2}$ - used in MSE loss and L2 regularization
-- **L1**: $\|\mathbf{x}\|_1 = \sum_i |x_i|$ - sums absolute values, induces sparsity
+Reading: the outer expectation is over real data $\mathbf{x}$; the inner expectation is over corrupted versions $\tilde{\mathbf{x}}$ (e.g., add Gaussian noise, randomly mask pixels). The network encodes the corrupted version and must decode the clean original.
 
-#### Matrices and Linear Transformations
+**Why this helps:** The model cannot memorize individual examples (corruption changes them at every step). It must learn the underlying structure that allows a corrupted observation to be restored - structure that generalizes. Denoising autoencoders have a deep theoretical connection to score matching: the learned encoder approximates $\nabla_\mathbf{x} \log p(\mathbf{x})$, the gradient of the log data density - a key quantity in modern diffusion models.
 
-A weight matrix $W \in \mathbb{R}^{m \times n}$ transforms $\mathbb{R}^n \to \mathbb{R}^m$. A neural layer computes $\mathbf{a} = \sigma(W\mathbf{x} + \mathbf{b})$. The transpose $W^\top$ swaps rows and columns - it appears in backpropagation: if forward propagation uses $W$, backward propagation uses $W^\top$.
 
-Matrix multiplication is **associative but not commutative**: $(AB)C = A(BC)$ but $AB \neq BA$ in general. Associativity is critical for efficient computation of multi-layer gradient products.
 
-#### Eigenvalues and Eigenvectors
+## 7.4 The Generation Problem: Why Classical Autoencoders Cannot Generate
 
-For $A \in \mathbb{R}^{n\times n}$, eigenvector $\mathbf{v} \neq 0$ satisfies $A\mathbf{v} = \lambda\mathbf{v}$: $A$ stretches $\mathbf{v}$ by factor $\lambda$ without changing direction. The spectral theorem guarantees symmetric matrices decompose as $A = Q\Lambda Q^\top$ (orthonormal eigenvectors, real eigenvalues). Eigenvalues of the Hessian determine critical point type; eigenvalues of weight matrices affect gradient flow (large → exploding, small → vanishing).
+Classical autoencoders excel at compression and reconstruction. But they have a fundamental limitation for *generative* modeling.
 
-#### Key Matrix Quantities
+After training, the encoder maps each training example $\mathbf{x}^{(i)}$ to a specific code $\mathbf{z}^{(i)}$. These codes form a cloud of points in the $d$-dimensional latent space. The shape of this cloud is arbitrary - it could be any irregular cluster of points, with "holes" (regions between training examples) containing no useful codes.
 
-| Quantity | Definition | Role |
-|---|---|---|
-| Frobenius norm | $\|A\|_F = \sqrt{\sum_{ij} A_{ij}^2}$ | L2 regularization |
-| Spectral norm | $\|A\|_2 = \max_{\|\mathbf{x}\|=1} \|A\mathbf{x}\|$ | Gradient stability |
-| Trace | $\text{tr}(A) = \sum_i A_{ii}$ | Sum of eigenvalues; total variance |
-| Determinant | $\det(A)$ | Volume scaling; $\det(A)=0$ means singular |
+**The generation problem:** To generate new examples, you sample a code $\mathbf{z}$ from the latent space and decode it. But if you sample uniformly or from a Gaussian, you will almost certainly land in a "hole" - a region where the decoder was never trained and will produce garbage.
 
+Classical autoencoders have **no mechanism** to structure the latent space in a way that enables sampling. They are excellent compressors but cannot generate.
 
+The Variational Autoencoder solves this with one elegant constraint: force the latent codes to be distributed like a standard Gaussian. Any point sampled from $\mathcal{N}(\mathbf{0}, I)$ is then a valid latent code, and the decoder produces something sensible.
 
-### Probability and Random Variables
 
-VAEs fundamentally rest on probability theory, treating encoding and decoding as *probabilistic inference*.
 
-#### Distributions and Expectations
+## 7.5 Variational Autoencoders: The Probabilistic Framework
 
-The **expected value** $\mathbb{E}[X]$ is the probability-weighted average of $X$. Expectations are linear: $\mathbb{E}[aX + bY] = a\mathbb{E}[X] + b\mathbb{E}[Y]$ - this underlies stochastic gradient descent, where minibatch gradients are *unbiased estimators* of true gradients. **Variance** $\text{Var}(X) = \mathbb{E}[(X - \mathbb{E}[X])^2]$ measures spread; for $n$ i.i.d. samples, $\text{Var}(\bar{X}) = \sigma^2/n$, explaining the diminishing returns of larger batches.
+### 7.5.1 The Generative Story
 
-#### Key Distributions
+The VAE posits a specific probabilistic story for how data is generated:
 
-**Gaussian** $\mathcal{N}(\mu, \sigma^2)$: the central limit theorem makes it ubiquitous; it maximizes entropy for fixed mean and variance; Gaussian noise assumptions yield MSE loss via MLE. The **multivariate Gaussian** in $\mathbb{R}^n$:
+1. Sample a latent code from the **prior**: $\mathbf{z} \sim p(\mathbf{z}) = \mathcal{N}(\mathbf{0}, I)$
+2. Generate data from the code: $\mathbf{x} | \mathbf{z} \sim p_\theta(\mathbf{x} | \mathbf{z})$
 
-$$p(\mathbf{x}) = (2\pi)^{-n/2}|\Sigma|^{-1/2}\exp\!\left(-\tfrac{1}{2}(\mathbf{x}-\boldsymbol{\mu})^\top \Sigma^{-1}(\mathbf{x}-\boldsymbol{\mu})\right)$$
+Reading:
+- $p(\mathbf{z}) = \mathcal{N}(\mathbf{0}, I)$: the prior over latent codes - a standard Gaussian. $\mathbf{0}$ is the zero mean vector; $I$ is the identity covariance (all dimensions independent, unit variance)
+- $p_\theta(\mathbf{x} | \mathbf{z})$: the decoder - given a latent code $\mathbf{z}$, produces a distribution over $\mathbf{x}$ (e.g., Gaussian with mean given by the decoder network output)
 
-The **standard normal** $\mathcal{N}(0, I)$ serves as the prior in most VAEs - simple, unimodal, rotationally symmetric. **Bernoulli** ($p$) models binary inputs (e.g., pixel intensities), with mean $p$ and variance $p(1-p)$.
+The marginal likelihood of an observed data point:
 
-#### Conditional Probability and Bayes' Theorem
+$$p_\theta(\mathbf{x}) = \int p_\theta(\mathbf{x} | \mathbf{z})\, p(\mathbf{z})\, d\mathbf{z}$$
 
-Bayes' theorem inverts conditioning: $p(\mathbf{x}|\mathbf{y}) = p(\mathbf{y}|\mathbf{x})p(\mathbf{x})/p(\mathbf{y})$. In VAE terminology:
-- $p_\theta(\mathbf{x}|\mathbf{z})$ - **decoder** (likelihood)
-- $p(\mathbf{z})$ - **prior** over latents
-- $p_\theta(\mathbf{z}|\mathbf{x})$ - **posterior** (intractable)
-- $p_\theta(\mathbf{x}) = \int p_\theta(\mathbf{x}|\mathbf{z})p(\mathbf{z})\,d\mathbf{z}$ - **marginal likelihood** (intractable)
+Reading: integrate over all possible latent codes $\mathbf{z}$ - the probability of observing $\mathbf{x}$ under any code, weighted by the prior probability of that code. The $\int \cdots d\mathbf{z}$ denotes integration over the entire $d$-dimensional latent space.
 
-VAEs approximate the intractable posterior with a learned distribution $q_\phi(\mathbf{z}|\mathbf{x})$.
+**The problem:** This integral is **intractable** for any expressive decoder $p_\theta(\mathbf{x}|\mathbf{z})$. We cannot enumerate all possible $\mathbf{z}$ values. We cannot maximize the log-likelihood $\log p_\theta(\mathbf{x})$ directly.
 
-#### Entropy, Cross-Entropy, and KL Divergence
+### 7.5.2 Variational Inference: Approximating the Intractable
 
-**Entropy** $H(X) = -\sum_x P(x)\log P(x)$ measures uncertainty - maximum for uniform distributions, zero for deterministic variables. Shannon's source coding theorem establishes $H(X)$ as the fundamental limit for lossless compression.
+The solution: instead of computing the true posterior $p_\theta(\mathbf{z}|\mathbf{x})$ ("what latent codes explain this data point?"), introduce an **approximate posterior** (also called the **recognition model** or **encoder**):
 
-**Cross-entropy** $H(P,Q) = -\sum_x P(x)\log Q(x)$ measures the cost of encoding samples from $P$ using a code optimized for $Q$. When $Q \neq P$, we pay an extra penalty: $H(P,Q) \geq H(P)$. In classification, minimizing cross-entropy encourages model predictions to match the true label distribution.
+$$q_\phi(\mathbf{z}|\mathbf{x}) = \mathcal{N}\!\left(\boldsymbol{\mu}_\phi(\mathbf{x}),\; \text{diag}(\boldsymbol{\sigma}^2_\phi(\mathbf{x}))\right)$$
 
-**KL divergence** $\text{KL}(P\|Q) = \sum_x P(x)\log\frac{P(x)}{Q(x)}$ measures distributional discrepancy:
-- Non-negative: $\text{KL}(P\|Q) \geq 0$, with equality iff $P = Q$
-- *Asymmetric*: $\text{KL}(P\|Q) \neq \text{KL}(Q\|P)$ in general
-- Related to cross-entropy: $\text{KL}(P\|Q) = H(P,Q) - H(P)$
+Reading:
+- $q_\phi(\mathbf{z}|\mathbf{x})$: the approximate posterior - a distribution over latent codes given input $\mathbf{x}$, parameterized by $\phi$ (the encoder's weights)
+- $\mathcal{N}(\boldsymbol{\mu}, \text{diag}(\boldsymbol{\sigma}^2))$: a Gaussian distribution with mean vector $\boldsymbol{\mu}$ and diagonal covariance matrix (all dimensions independent, each with its own variance $\sigma_j^2$)
+- $\boldsymbol{\mu}_\phi(\mathbf{x})$: a vector of $d$ mean values - the encoder network outputs these, one per latent dimension
+- $\boldsymbol{\sigma}^2_\phi(\mathbf{x})$: a vector of $d$ variance values - the encoder also outputs these
+- Together: for each input $\mathbf{x}$, the encoder outputs not a single code but a *distribution* of codes - capturing the uncertainty about which latent representation best explains the input
 
-In VAEs, $\text{KL}(q_\phi(\mathbf{z}|\mathbf{x}) \| p(\mathbf{z}))$ regularizes the latent space by penalizing deviation of the approximate posterior from the prior.
+**The key difference from a classical autoencoder:** The classical encoder outputs a single point $\mathbf{z} = E_\phi(\mathbf{x})$. The VAE encoder outputs a Gaussian distribution: "The latent code is probably around $\boldsymbol{\mu}_\phi(\mathbf{x})$, with uncertainty $\boldsymbol{\sigma}^2_\phi(\mathbf{x})$".
 
-#### Maximum Likelihood Estimation
+### 7.5.3 The ELBO: A Tractable Training Objective
 
-Given dataset $\{x_i\}_{i=1}^N$ i.i.d. from $p_\theta$, MLE maximizes the log-likelihood:
+We derive the training objective using a mathematical identity. Starting from the log-likelihood of a single example $\mathbf{x}$, for any distribution $q_\phi(\mathbf{z}|\mathbf{x})$:
 
-$$\hat{\theta}_\text{MLE} = \arg\max_\theta \sum_{i=1}^N \log p_\theta(x_i)$$
+$$\log p_\theta(\mathbf{x}) = \underbrace{\mathcal{L}_{\text{ELBO}}(\phi, \theta; \mathbf{x})}_{\text{Evidence Lower BOund}} + \underbrace{\text{KL}\!\left(q_\phi(\mathbf{z}|\mathbf{x}) \,\|\, p_\theta(\mathbf{z}|\mathbf{x})\right)}_{\geq 0}$$
 
-- Under **Gaussian noise** ($y = f_\theta(x) + \varepsilon$, $\varepsilon \sim \mathcal{N}(0,\sigma^2)$), MLE reduces to minimizing MSE
-- Under **Bernoulli output**, MLE reduces to cross-entropy
+Reading:
+- The left side: $\log p_\theta(\mathbf{x})$ is the log-likelihood we want to maximize - the log-probability of the observed data under our model
+- The right side: the ELBO plus a KL divergence term
+- $\text{KL}(q \| p) \geq 0$: KL divergence is always non-negative (it measures how different two distributions are; zero only when they are identical)
 
-For VAEs, the marginal $p_\theta(\mathbf{x}) = \int p_\theta(\mathbf{x}|\mathbf{z})p(\mathbf{z})\,d\mathbf{z}$ is intractable, motivating the ELBO as a tractable surrogate.
+**Consequence:** Since the KL term $\geq 0$:
 
+$$\log p_\theta(\mathbf{x}) \geq \mathcal{L}_{\text{ELBO}}(\phi, \theta; \mathbf{x})$$
 
+The ELBO is a **lower bound** on the log-likelihood. Maximizing the ELBO:
+- Pushes the log-likelihood up (good - we want high likelihood)
+- Simultaneously minimizes the KL gap (good - makes $q_\phi$ a better approximation to the true posterior)
 
-### Information Theory and Compression
+The ELBO is tractable - we can compute and optimize it. The log-likelihood is intractable - we cannot. The ELBO is the best tractable surrogate.
 
-Information theory (Shannon, 1948) quantifies information, compression limits, and uncertainty - illuminating why autoencoders work.
+**Expanding the ELBO:** Using the rules of probability and logarithms:
 
-#### Entropy and Mutual Information
+$$\mathcal{L}_{\text{ELBO}} = \underbrace{\mathbb{E}_{q_\phi(\mathbf{z}|\mathbf{x})}\!\left[\log p_\theta(\mathbf{x}|\mathbf{z})\right]}_{\text{Reconstruction Term}} - \underbrace{\text{KL}\!\left(q_\phi(\mathbf{z}|\mathbf{x}) \,\|\, p(\mathbf{z})\right)}_{\text{Regularization Term}}$$
 
-The **information content** (surprisal) of outcome $x$ is $I(x) = -\log P(x)$: rare events carry high information; common events carry little. Entropy $H(X) = \mathbb{E}[I(X)]$ is the average surprise, and equals the minimum average code length for lossless compression.
+Reading:
+- $\mathbb{E}_{q_\phi(\mathbf{z}|\mathbf{x})}[\cdot]$: expectation under the approximate posterior - sample $\mathbf{z}$ from the encoder's distribution, evaluate the bracketed quantity, and average
+- $\log p_\theta(\mathbf{x}|\mathbf{z})$: the log-probability of the input $\mathbf{x}$ given latent code $\mathbf{z}$ - measured by the decoder. Higher is better; we want the decoder to assign high probability to the true input
+- **Reconstruction term:** Maximizing $\mathbb{E}[\log p_\theta(\mathbf{x}|\mathbf{z})]$ is exactly minimizing reconstruction error - just like a classical autoencoder
+- $\text{KL}(q_\phi(\mathbf{z}|\mathbf{x}) \| p(\mathbf{z}))$: the KL divergence between the encoder's distribution and the prior $\mathcal{N}(\mathbf{0}, I)$. Minimizing this makes the encoder's codes look like standard Gaussian draws
+- **Regularization term (negative sign):** We *subtract* the KL term (equivalently, we maximize the ELBO by minimizing the KL divergence)
 
-**Mutual information** $I(X;Y) = H(X) - H(X|Y)$ quantifies information shared between $X$ and $Y$. It satisfies:
-- Non-negativity: $I(X;Y) \geq 0$, with equality iff $X \perp Y$
-- Symmetry: $I(X;Y) = I(Y;X)$
-- *Data processing inequality*: for Markov chain $X \to Y \to Z$, $\;I(X;Z) \leq I(X;Y)$
+**The tension in the objective:**
+- The reconstruction term wants the encoder to produce highly informative, specific codes ($\boldsymbol{\mu}$ far from zero, $\boldsymbol{\sigma}$ small) - codes that let the decoder perfectly reconstruct $\mathbf{x}$
+- The KL term wants the codes to look like draws from $\mathcal{N}(\mathbf{0}, I)$ - pushing $\boldsymbol{\mu}$ toward $\mathbf{0}$ and $\boldsymbol{\sigma}$ toward $\mathbf{1}$
+- Training finds the balance: codes that are informative enough to reconstruct well, but structured enough to look like the prior
 
-In VAEs, $\mathbb{E}_x[\text{KL}(q_\phi(\mathbf{z}|\mathbf{x}) \| p(\mathbf{z}))]$ equals the mutual information $I(X;Z)$ under the variational distribution - showing that VAEs trade off *maximizing information* (reconstruction) against *minimizing mutual information* (regularization/compression).
+This balance is what gives the VAE its generative power: at equilibrium, a sample from $\mathcal{N}(\mathbf{0}, I)$ is a plausible latent code, and the decoder produces something that looks like real data.
 
-#### Rate-Distortion Theory
+### 7.5.4 The KL Term: Closed Form Solution
 
-Rate-distortion theory studies the trade-off between compression rate (bits/sample) and distortion (reconstruction error). The **rate-distortion function** $R(D)$ defines the minimum bits per sample required to achieve expected distortion $\leq D$. For Gaussian sources with squared error:
+For diagonal Gaussian approximate posterior $q_\phi(\mathbf{z}|\mathbf{x}) = \mathcal{N}(\boldsymbol{\mu}, \text{diag}(\boldsymbol{\sigma}^2))$ and standard Gaussian prior $p(\mathbf{z}) = \mathcal{N}(\mathbf{0}, I)$, the KL divergence has an exact, closed-form solution:
 
-$$R(D) = \frac{1}{2}\log\frac{\sigma^2}{D}$$
+$$\text{KL}\!\left(q_\phi(\mathbf{z}|\mathbf{x}) \| p(\mathbf{z})\right) = \frac{1}{2}\sum_{j=1}^{d}\!\left(\sigma_j^2 + \mu_j^2 - 1 - \log \sigma_j^2\right)$$
 
-Halving distortion costs one extra bit. VAEs directly instantiate this: the ELBO decomposes as *reconstruction* (distortion) minus *KL divergence* (rate). The $\beta$-VAE hyperparameter explicitly controls this trade-off.
+Reading:
+- $\sum_{j=1}^{d}$: sum over all $d$ latent dimensions
+- For each dimension $j$: the term is $\sigma_j^2 + \mu_j^2 - 1 - \log \sigma_j^2$
+- When $\mu_j = 0$ and $\sigma_j = 1$ (exactly the prior): the term is $1 + 0 - 1 - 0 = 0$ - zero KL divergence, the encoder matches the prior perfectly
+- When $\mu_j \neq 0$ or $\sigma_j \neq 1$: the term is positive - the encoder deviates from the prior, incurring regularization cost
 
-#### The Information Bottleneck
+**Gradient of KL with respect to encoder parameters:** $\frac{\partial \text{KL}}{\partial \mu_j} = \mu_j$ (push $\mu_j$ toward zero); $\frac{\partial \text{KL}}{\partial \sigma_j^2} = \frac{1}{2}(1 - 1/\sigma_j^2)$ (push $\sigma_j$ toward 1). These gradients are simple and always computable - no approximation needed.
 
-The information bottleneck (Tishby et al., 1999) seeks a representation $Z$ that compresses $X$ (minimize $I(X;Z)$) while retaining task-relevant information $Y$ (maximize $I(Z;Y)$):
+### 7.5.5 The Reparameterization Trick: Making Sampling Differentiable
 
-$$\max_{p(\mathbf{z}|\mathbf{x})}\; I(Z;Y) - \beta\, I(X;Z)$$
+Training the VAE requires gradients of the ELBO with respect to encoder parameters $\phi$. The ELBO reconstruction term involves an expectation over $\mathbf{z} \sim q_\phi(\mathbf{z}|\mathbf{x})$:
 
-For autoencoders where $Y = X$, this becomes $(1-\beta)I(X;Z)$. Standard VAEs correspond to $\beta = 1$; $\beta$-VAEs use $\beta > 1$ for stronger compression. The bottleneck forces the representation to retain the most informative aspects of $X$ while discarding noise.
+$$\mathbb{E}_{q_\phi(\mathbf{z}|\mathbf{x})}\!\left[\log p_\theta(\mathbf{x}|\mathbf{z})\right]$$
 
+To compute this expectation, we must **sample** $\mathbf{z}$ from the encoder's distribution. But sampling is a stochastic operation - you cannot differentiate through a random sample with respect to the distribution's parameters. The gradient would be zero everywhere.
 
+**The reparameterization trick** circumvents this by moving the randomness outside the gradient computation:
 
-## Classical Autoencoders
+**Before reparameterization:** $\mathbf{z} \sim \mathcal{N}(\boldsymbol{\mu}_\phi(\mathbf{x}), \text{diag}(\boldsymbol{\sigma}^2_\phi(\mathbf{x})))$
 
-### Architecture and Training
+Sample directly from the encoder's Gaussian - the parameters $\phi$ are "inside" the sample.
 
-An autoencoder has:
-- **Encoder** $E_\phi: \mathbb{R}^D \to \mathbb{R}^d$: $\;\mathbf{z} = E_\phi(\mathbf{x})$
-- **Decoder** $D_\theta: \mathbb{R}^d \to \mathbb{R}^D$: $\;\hat{\mathbf{x}} = D_\theta(\mathbf{z})$
+**After reparameterization:**
 
-Training minimizes empirical reconstruction error:
+$$\boldsymbol{\varepsilon} \sim \mathcal{N}(\mathbf{0}, I), \qquad \mathbf{z} = \boldsymbol{\mu}_\phi(\mathbf{x}) + \boldsymbol{\sigma}_\phi(\mathbf{x}) \odot \boldsymbol{\varepsilon}$$
 
-$$\min_{\phi,\theta}\; \frac{1}{N}\sum_{i=1}^N \|x^{(i)} - D_\theta(E_\phi(x^{(i)}))\|^2$$
+Reading:
+- $\boldsymbol{\varepsilon}$: "noise vector" - sampled from a *fixed* standard Gaussian, containing no learnable parameters
+- $\boldsymbol{\mu}_\phi(\mathbf{x}) + \boldsymbol{\sigma}_\phi(\mathbf{x}) \odot \boldsymbol{\varepsilon}$: compute $\mathbf{z}$ as a *deterministic function* of the encoder outputs and the noise
+  - $\boldsymbol{\mu}_\phi(\mathbf{x})$: the encoder's mean output (differentiable with respect to $\phi$)
+  - $\boldsymbol{\sigma}_\phi(\mathbf{x}) \odot \boldsymbol{\varepsilon}$: element-wise multiply the encoder's standard deviation output by the noise (differentiable with respect to $\phi$)
+- Result: $\mathbf{z}$ is still a sample from $\mathcal{N}(\boldsymbol{\mu}_\phi(\mathbf{x}), \text{diag}(\boldsymbol{\sigma}^2_\phi(\mathbf{x})))$ - statistically equivalent to before
+- But now: $\mathbf{z}$ is a differentiable function of $\phi$ (through $\boldsymbol{\mu}_\phi$ and $\boldsymbol{\sigma}_\phi$). Gradients can flow through $\mathbf{z}$ back to the encoder parameters.
 
-For **binary data**, binary cross-entropy replaces MSE - arising naturally from MLE under a Bernoulli observation model.
+**Why it works:** The randomness (the noise $\boldsymbol{\varepsilon}$) is in a fixed, parameter-free distribution. The parameters $\phi$ control only the *location and scale* of the Gaussian - both differentiable operations. We have "separated" the source of randomness from the source of trainable computation.
 
-The typical architecture is symmetric ("bowtie" / "hourglass") with decreasing dimensionality in the encoder and increasing in the decoder, using ReLU activations in hidden layers. The final encoder layer is often linear; the final decoder activation depends on the output type (sigmoid for $[0,1]$, identity for real-valued).
+> TODO: <!-- DIAGRAM: [Two versions side by side. Left: "Before Reparameterization" - box labeled "Encoder $\phi$" outputs $\boldsymbol{\mu}$, $\boldsymbol{\sigma}$. A "Sample" node takes $\boldsymbol{\mu}$ and $\boldsymbol{\sigma}$ and produces $\mathbf{z}$. A red X over the arrow from Sample to Encoder says "No gradient through sampling". Right: "After Reparameterization" - box labeled "Encoder $\phi$" outputs $\boldsymbol{\mu}$, $\boldsymbol{\sigma}$. A separate "Sample $\boldsymbol{\varepsilon} \sim \mathcal{N}(\mathbf{0},I)$" node (with no parameters). A deterministic "Transform: $\mathbf{z} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\varepsilon}$" box combines them. A green checkmark over the gradient path. Caption: "Reparameterization moves randomness outside the computation graph. Gradients can now flow through the deterministic transformation back to the encoder parameters".] -->
 
-Training dynamics follow standard supervised learning. Gradients flow end-to-end via:
+### 7.5.6 The Complete VAE Training Objective
 
-$$\frac{\partial \ell}{\partial \phi} = \underbrace{\frac{\partial \ell}{\partial \hat{\mathbf{x}}}}_{\text{loss grad}}\underbrace{\frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{z}}}_{\text{decoder Jacobian}}\underbrace{\frac{\partial \mathbf{z}}{\partial \phi}}_{\text{encoder Jacobian}}$$
+For a dataset of $N$ examples, with $L$ Monte Carlo samples per example (in practice $L=1$ works fine because gradients are averaged over the minibatch):
 
-The encoder and decoder *co-adapt*: the encoder learns codes the decoder can reconstruct; the decoder learns to reconstruct from whatever codes the encoder provides.
+$$\mathcal{L}(\phi, \theta) = \frac{1}{N}\sum_{i=1}^{N} \left[\frac{1}{L}\sum_{\ell=1}^{L} \log p_\theta\!\left(\mathbf{x}^{(i)} \middle| \boldsymbol{\mu}_\phi(\mathbf{x}^{(i)}) + \boldsymbol{\sigma}_\phi(\mathbf{x}^{(i)}) \odot \boldsymbol{\varepsilon}^{(\ell)}\right) - \text{KL}\!\left(q_\phi(\mathbf{z}|\mathbf{x}^{(i)}) \| p(\mathbf{z})\right)\right]$$
 
-#### The Bottleneck
+Reading the key structure:
+- The outer sum: average over $N$ training examples
+- The reconstruction term: for each sampled noise $\boldsymbol{\varepsilon}^{(\ell)}$, compute a code $\mathbf{z}^{(\ell)} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\varepsilon}^{(\ell)}$, decode it, measure the log-likelihood. Average over $L$ samples for a low-variance estimate
+- The KL term: computed analytically (closed form from Section 7.5.4), subtracted
 
-The key feature is $d \ll D$ (the **undercomplete** regime). This prevents the trivial identity solution - insufficient capacity forces the network to discover *regularities* and discard noise. The compression ratio $D/d$ quantifies the constraint (e.g., $784/32 \approx 24.5\times$ for MNIST).
+Both terms have gradients computable by backpropagation: the reconstruction term through the reparameterization trick; the KL term analytically.
 
-Information-theoretically: $I(X;Z) \leq H(Z)$, which is bounded by latent dimensionality. The autoencoder must use this limited capacity efficiently.
 
-#### Overcomplete Autoencoders
 
-When $d \geq D$, the trivial identity solution is available (encoder copies input, decoder copies back). To prevent this, **regularization** is required - sparsity penalties, denoising, or contractive constraints force meaningful structure rather than memorization.
+## 7.6 Understanding the VAE Latent Space
 
-#### Depth and Hierarchical Features
+Training produces a latent space with three useful properties:
 
-Deep architectures learn hierarchical representations: early layers extract low-level features (edges, textures), middle layers combine them (corners, curves), and deep layers produce high-level semantic codes. The decoder reverses this hierarchy. Empirically, deep autoencoders outperform shallow ones with equal parameter counts, thanks to the inductive bias toward hierarchical structure.
+**1. Continuity:** Nearby codes decode to similar outputs. You can smoothly interpolate between two images by linearly interpolating their latent codes - the intermediate codes decode to sensible intermediate images. The KL regularization ensures "holes" in the latent space (regions not covered by training codes) decode to something reasonable, because these regions overlap with the standard Gaussian prior.
 
-#### Overfitting and Regularization
+**2. Completeness:** Sampling from $\mathcal{N}(\mathbf{0}, I)$ always produces a plausible code. The KL term forces all training examples' codes to cluster around the origin with spread roughly $\pm 1$ - covering the standard Gaussian prior.
 
-Signs of overfitting: decreasing training error but stagnant or growing validation error. Standard mitigations:
-- **Weight decay (L2)**: Adds $\lambda\|\theta\|^2$ penalty - penalizes large weights, effective for $\lambda \in [10^{-5}, 10^{-3}]$
-- **Dropout**: Randomly zeroes activations ($p \approx 0.2$–$0.5$) during training, preventing co-adaptation
-- **Early stopping**: Halt when validation error stops improving
-- **Data augmentation**: Generate additional examples via structure-preserving transformations
+**3. Disentanglement (approximate):** Different latent dimensions encode different factors of variation. One dimension may control pose, another identity, another lighting. Moving along a single latent dimension changes only the corresponding factor. The independence assumption in the diagonal Gaussian posterior promotes this: each dimension is pushed to vary independently.
 
+**The $\beta$-VAE** amplifies disentanglement by weighting the KL term more heavily:
 
+$$\mathcal{L}_{\beta\text{-VAE}} = \mathbb{E}_{q_\phi}\!\left[\log p_\theta(\mathbf{x}|\mathbf{z})\right] - \beta\, \text{KL}\!\left(q_\phi(\mathbf{z}|\mathbf{x}) \| p(\mathbf{z})\right), \quad \beta > 1$$
 
-### Connection to PCA
+Reading: $\beta > 1$ applies a larger penalty for each unit of KL divergence, forcing more aggressive compression. This stronger pressure pushes dimensions to be more independent (it becomes costly to use multiple dimensions to encode the same information). Empirically, $\beta$-VAEs learn more interpretable representations at the cost of slightly worse reconstruction quality.
 
-#### PCA: Optimal Linear Subspace
 
-PCA finds the $d$-dimensional linear subspace minimizing squared reconstruction error by keeping the top-$d$ eigenvectors of the data covariance $\Sigma$. Encoding: $\mathbf{z} = U^\top \mathbf{x}$; decoding: $\hat{\mathbf{x}} = U\mathbf{z}$. The reconstruction error equals the *sum of discarded eigenvalues*:
 
-$$\mathbb{E}[\|\mathbf{x} - \hat{\mathbf{x}}\|^2] = \sum_{i=d+1}^D \lambda_i$$
+## 7.7 VAE Variants
 
-#### Linear Autoencoders = PCA
+### 7.7.1 Conditional VAE (CVAE)
 
-A landmark result (Baldi & Hornik, 1989): *linear autoencoders learn exactly the PCA solution*. The optimal decoder satisfies $V = W^\top$, and the encoder weights converge to the top-$d$ principal components regardless of initialization. This establishes that:
-1. PCA is optimal among *linear* dimensionality reduction methods
-2. Autoencoders generalize PCA by discovering *curved* manifolds with nonlinear activations
-3. PCA provides theoretical grounding for what linear autoencoders learn
+The standard VAE generates samples unconditionally. To control *what* is generated - produce a specific digit, generate a molecule with certain properties - condition both encoder and decoder on auxiliary information $\mathbf{c}$:
 
-#### Beyond Linear: Nonlinear Manifolds
+$$q_\phi(\mathbf{z}|\mathbf{x}, \mathbf{c}), \quad p_\theta(\mathbf{x}|\mathbf{z}, \mathbf{c})$$
 
-Real data rarely lives on linear subspaces. Consider points on a circle in $\mathbb{R}^2$ - intrinsically 1D, but PCA fails because the circle is curved. A nonlinear autoencoder can learn the angle as a 1D representation and decode back to $(x,y)$ coordinates. More generally, deep nonlinear autoencoders learn coordinate charts on curved $d$-dimensional manifolds within $\mathbb{R}^D$ - representations that linear methods cannot capture.
+The conditioning variable $\mathbf{c}$ can be a class label (concatenated to the input), a text description (encoded by a separate encoder), or any structured annotation. At generation time: sample $\mathbf{z} \sim \mathcal{N}(\mathbf{0}, I)$, specify $\mathbf{c}$ (the desired attributes), and decode. The decoder has learned "given code $\mathbf{z}$ and condition $\mathbf{c}$, generate an image with attributes $\mathbf{c}$".
 
+### 7.7.2 Vector Quantized VAE (VQ-VAE)
 
+Standard VAEs use continuous Gaussian latent spaces. For discrete data (language tokens, symbolic structures), or when the decoder becomes too powerful (causing **posterior collapse** - the decoder ignores the latent code entirely), a discrete latent space is preferable.
 
-## Regularized Autoencoders
+**VQ-VAE** (van den Oord et al., 2017) replaces the Gaussian encoder with quantization to a learned **codebook** $\{e_k\}_{k=1}^K$:
 
-Beyond the dimensional bottleneck, additional regularization improves generalization and representation quality.
+1. The encoder produces a continuous embedding $E_\phi(\mathbf{x}) \in \mathbb{R}^d$
+2. The embedding is quantized to the nearest codebook entry:
+   $$\mathbf{z}_q = e_{k^*}, \quad k^* = \arg\min_k \|E_\phi(\mathbf{x}) - e_k\|_2^2$$
+   Reading: find the index $k^*$ of the codebook entry $e_k$ closest to the encoder output in Euclidean distance. Use that codebook entry as the latent code.
+3. The decoder receives $\mathbf{z}_q$ and reconstructs $\hat{\mathbf{x}}$
 
-### Sparse Autoencoders
+The quantization step ($\arg\min$) is not differentiable. The **straight-through estimator** handles this: in the backward pass, copy gradients from the decoder input to the encoder output, bypassing the argmin. The codebook entries $e_k$ are updated by moving them toward the encoder outputs that were assigned to them (exponentially moving average).
 
-Sparse representations - where most latent components are near zero - are desirable for interpretability, efficiency, and alignment with biological coding principles.
+VQ-VAE eliminates posterior collapse because the discrete codebook has finite capacity - the decoder cannot ignore the code (there are only $K$ possible codes, and each carries distinct information). Combined with autoregressive priors trained over the codebook indices, VQ-VAE-2 generates images at $1024 \times 1024$ resolution with remarkable quality.
 
-**L1 sparsity**: Add penalty $\lambda\|E_\phi(\mathbf{x})\|_1$ to the reconstruction loss. The L1 norm produces truly sparse solutions (exact zeros), unlike L2 which merely shrinks all values. Gradient: $\partial\Omega/\partial\mathbf{z} = \text{sign}(\mathbf{z})$, pushing values toward zero.
 
-**KL sparsity** (Ng, 2011): Enforce target average activation $\rho$ (typically 0.05) per latent dimension $j$:
 
-$$\Omega = \sum_j \text{KL}\!\left(\rho \,\|\, \hat{\rho}_j\right) = \sum_j \left[\rho\log\frac{\rho}{\hat{\rho}_j} + (1-\rho)\log\frac{1-\rho}{1-\hat{\rho}_j}\right]$$
+## 7.8 The Connection to Diffusion Models
 
-where $\hat{\rho}_j$ is the running average activation. This penalizes over- and under-active dimensions symmetrically.
+Denoising diffusion probabilistic models - which power DALL-E 2, Stable Diffusion, and Midjourney - are deeply connected to the autoencoder framework.
 
-Sparse autoencoders trained on natural images learn **Gabor-filter-like receptive fields** - mirroring V1 simple cells in visual cortex (Olshausen & Field, 1996). ReLU activations naturally support sparsity since negative pre-activations yield exact zeros. Implementation requires tuning $\lambda$ via grid search, monitoring reconstruction quality and fraction of near-zero activations.
+A diffusion model defines a **forward process** that gradually adds noise over $T$ steps:
 
-### Denoising Autoencoders
+$$q(\mathbf{x}_t | \mathbf{x}_{t-1}) = \mathcal{N}\!\left(\mathbf{x}_t;\; \sqrt{1-\beta_t}\, \mathbf{x}_{t-1},\; \beta_t I\right)$$
 
-Denoising autoencoders (DAE; Vincent et al., 2008) train to reconstruct *clean* inputs from *corrupted* versions $\tilde{\mathbf{x}} \sim C(\cdot|\mathbf{x})$:
+Reading:
+- $\mathbf{x}_t$: the data at noise level $t$ (at $t=0$: clean data; at $t=T$: pure noise)
+- $\mathcal{N}(\mathbf{x}_t; \boldsymbol{\mu}, \Sigma)$: a Gaussian with mean $\boldsymbol{\mu}$ and covariance $\Sigma$, evaluated at point $\mathbf{x}_t$
+- $\sqrt{1-\beta_t}\, \mathbf{x}_{t-1}$: a slightly scaled-down version of the previous step (preserves signal)
+- $\beta_t I$: added Gaussian noise with variance $\beta_t$ in each dimension
+- Together: each step slightly corrupts the data by mixing in Gaussian noise
 
-$$\mathcal{L} = \mathbb{E}_{\mathbf{x}}\,\mathbb{E}_{\tilde{\mathbf{x}} \sim C(\cdot|\mathbf{x})}\left[\|\mathbf{x} - D_\theta(E_\phi(\tilde{\mathbf{x}}))\|^2\right]$$
+After $T$ steps: $\mathbf{x}_T \approx \mathcal{N}(\mathbf{0}, I)$ - pure noise. The model learns the **reverse process**: given noisy $\mathbf{x}_t$, predict the slightly denoised $\mathbf{x}_{t-1}$. Starting from pure noise and iteratively denoising produces new samples.
 
-Common corruption types: **additive Gaussian noise** $\tilde{\mathbf{x}} = \mathbf{x} + \varepsilon$; **masking noise** (randomly zero out pixels with probability $p$); **salt-and-pepper noise** (randomly set to 0 or 1). Note: *loss compares reconstruction to the clean $\mathbf{x}$, not the corrupted $\tilde{\mathbf{x}}$.*
+**The VAE connection:** A diffusion model is a hierarchical VAE with $T$ levels. Each level is an approximate Gaussian encoder ($q(\mathbf{x}_t | \mathbf{x}_{t-1})$ adds noise) and Gaussian decoder ($p(\mathbf{x}_{t-1} | \mathbf{x}_t)$ removes noise). The ELBO for the diffusion model decomposes into $T$ reconstruction terms - one per noise level - weighted by the signal-to-noise ratio at each level.
 
-Why denoising helps:
-- **Prevents identity solution**: Since $\tilde{\mathbf{x}} \neq \mathbf{x}$, copying doesn't work even in overcomplete regimes
-- **Robust features**: Only features capturing genuine signal (not noise) can denoise reliably
-- **Implicit regularization**: Corruption acts like dropout on inputs, improving generalization
-- **Manifold learning**: The decoder learns to project corrupted (off-manifold) points back onto the manifold
+**The denoising autoencoder connection:** Denoising autoencoders (Section 7.3.3) are one-step diffusion models. The learned denoising function approximates the score function $\nabla_\mathbf{x} \log p(\mathbf{x})$ - the gradient of the log data density. Diffusion models can be seen as training a denoiser at every noise level simultaneously, then chaining these denoisers together to generate samples.
 
-For small corruption, the optimal denoising function approximates a *vector field pointing toward the data manifold* (Vincent et al., 2008). **Stacked denoising autoencoders** (SDAE) build deep representations via layer-wise pretraining, although this practice is less common in the modern era of improved initializers.
 
-### Contractive Autoencoders
 
-Contractive autoencoders (CAE; Rifai et al., 2011) explicitly penalize encoder *sensitivity* to input perturbations. The Jacobian $J_E = \partial E_\phi / \partial \mathbf{x} \in \mathbb{R}^{d \times D}$ captures how changes in $\mathbf{x}$ propagate to $\mathbf{z}$. The contractive penalty is:
+## 7.9 Applications
 
-$$\mathcal{L} = \mathbb{E}_\mathbf{x}\left[\|\mathbf{x} - D_\theta(E_\phi(\mathbf{x}))\|^2 + \lambda\|J_E(\mathbf{x})\|_F^2\right]$$
+**Anomaly detection:** Train on normal data; flag inputs with high reconstruction error as anomalies. No anomaly labels needed during training. Applications: industrial defect detection, network intrusion detection, medical screening.
 
-For a one-hidden-layer encoder (with sigmoid activations), $\|J_E\|_F^2$ can be computed efficiently using hidden activations $\mathbf{h}$:
+**Representation learning:** Encoder features from a pretrained autoencoder generalize across tasks. Fine-tune on small labeled datasets using the encoder's representations as features - often outperforms training from scratch when labels are scarce.
 
-$$\|J_E\|_F^2 = \left\|W_1^\top \text{diag}(\mathbf{h} \odot (1-\mathbf{h}))\right\|_F^2$$
+**Drug discovery:** VAEs trained on molecular representations (SMILES strings, molecular graphs) learn smooth latent spaces over chemical structures. Optimization in latent space - finding codes that decode to molecules with desired properties - is far more efficient than search in the discrete molecular space.
 
-*Geometric interpretation*: The penalty discourages sensitivity in all input directions. Since data concentrates near the manifold, most directions are approximately orthogonal to it - so the penalty primarily enforces invariance in off-manifold directions while allowing variation *along* the manifold.
+**Image editing:** Identify the latent direction that encodes a specific attribute (e.g., "smiling" in face images). Add or subtract this direction from any input image's code to add or remove the attribute in the reconstruction.
 
-Alain & Bengio (2013) showed that for infinitesimal Gaussian noise, minimizing DAE reconstruction error is equivalent to a score-matching objective closely related to the contractive penalty - revealing a surprising theoretical connection between the two. In practice, DAEs are simpler to implement; CAEs offer more direct geometric control.
 
 
+## 7.10 Summary
 
-## Variational Autoencoders - Probabilistic Foundation
+Autoencoders introduced a new paradigm: learning the structure of the data distribution by forcing networks to compress and reconstruct. The bottleneck information pressure discovers the manifold structure - the most efficient coordinate system for the data.
 
-VAEs transform autoencoders from deterministic dimensionality reduction into **probabilistic generative models**. This shift enables principled sample generation, uncertainty quantification, and theoretical connections to Bayesian inference.
+The VAE adds probabilistic rigor: by treating the latent space as a distribution rather than a single point, and by regularizing this distribution toward a standard Gaussian prior, the VAE enables principled generation and smooth interpolation. The ELBO objective balances reconstruction quality against latent space regularity. The reparameterization trick makes the stochastic objective differentiable.
 
-### From Deterministic to Probabilistic Encoding
+The deeper theoretical story: the ELBO is rate-distortion theory instantiated in a neural network. Reconstruction quality is the distortion; KL divergence is the rate (bits used to represent each example). The balance between them, controlled by $\beta$ in the $\beta$-VAE, reflects the fundamental tradeoff between compression and fidelity.
 
-Classical autoencoders map $\mathbf{x} \mapsto \mathbf{z}$ deterministically. VAEs instead treat the encoder as defining a *distribution* $q_\phi(\mathbf{z}|\mathbf{x})$ over latent codes. Advantages:
-1. **Generative modeling**: Sample $\mathbf{z} \sim p(\mathbf{z})$, then $\mathbf{x} \sim p_\theta(\cdot|\mathbf{z})$
-2. **Uncertainty quantification**: $q_\phi(\mathbf{z}|\mathbf{x})$ expresses latent uncertainty
-3. **Principled objective**: Likelihood maximization provides theoretical foundation
-4. **Regularization**: The prior $p(\mathbf{z})$ naturally regularizes the latent space
 
-### The Generative Model
 
-The VAE posits a generative process:
-1. Sample latent: $\mathbf{z} \sim p(\mathbf{z}) = \mathcal{N}(0, I)$
-2. Generate observation: $\mathbf{x} \sim p_\theta(\mathbf{x}|\mathbf{z})$
+*Autoencoders learn to compress; RNNs learn to process sequences; CNNs learn to see. Chapter 8 brings us to the current frontier: architectures that process sequences as efficiently as RNNs but with the long-range memory of Transformers - State Space Models and Mamba.*
 
-The decoder network parameterizes $p_\theta(\mathbf{x}|\mathbf{z})$:
-- **Continuous**: $p_\theta(\mathbf{x}|\mathbf{z}) = \mathcal{N}(\mathbf{x};\, \mu_\theta(\mathbf{z}),\, \sigma^2 I)$
-- **Binary**: $p_\theta(\mathbf{x}|\mathbf{z}) = \prod_i \text{Bernoulli}(x_i;\, \mu_\theta(\mathbf{z})_i)$
-
-The marginal likelihood $p_\theta(\mathbf{x}) = \int p_\theta(\mathbf{x}|\mathbf{z})\,p(\mathbf{z})\,d\mathbf{z}$ is *intractable* - this integral has no closed form over a neural network decoder. This motivates the variational approach.
-
-### Variational Approximation
-
-Exact posterior $p_\theta(\mathbf{z}|\mathbf{x}) = p_\theta(\mathbf{x}|\mathbf{z})\,p(\mathbf{z})\,/\,p_\theta(\mathbf{x})$ is also intractable. VAEs approximate it with a learned Gaussian:
-
-$$q_\phi(\mathbf{z}|\mathbf{x}) = \mathcal{N}\!\left(\mathbf{z};\; \mu_\phi(\mathbf{x}),\; \text{diag}(\sigma_\phi^2(\mathbf{x}))\right)$$
-
-where $\mu_\phi$ and $\sigma_\phi$ are both outputs of the encoder network.
-
-### The Evidence Lower Bound (ELBO)
-
-#### Derivation
-
-Since $p_\theta(\mathbf{x})$ is intractable, we maximize a lower bound. Starting from the log-likelihood and applying Jensen's inequality ($\log$ is concave):
-
-$$\log p_\theta(\mathbf{x}) \geq \underbrace{\mathbb{E}_{q_\phi}\left[\log p_\theta(\mathbf{x}|\mathbf{z})\right]}_{\text{reconstruction}} - \underbrace{\text{KL}(q_\phi(\mathbf{z}|\mathbf{x}) \,\|\, p(\mathbf{z}))}_{\text{regularization}} \;=:\; \mathcal{L}(\theta, \phi;\, \mathbf{x})$$
-
-The ELBO $\mathcal{L}$ has two terms:
-- **Reconstruction term**: Expected log-likelihood of $\mathbf{x}$ under the decoder - encourages accurate reconstructions
-- **KL term**: Divergence between approximate posterior and prior - regularizes the latent space
-
-#### Tightness
-
-The gap between the ELBO and the true log-likelihood equals the KL to the *true* posterior:
-
-$$\log p_\theta(\mathbf{x}) = \mathcal{L}(\theta, \phi;\, \mathbf{x}) + \text{KL}(q_\phi(\mathbf{z}|\mathbf{x}) \,\|\, p_\theta(\mathbf{z}|\mathbf{x}))$$
-
-Since $\text{KL} \geq 0$, the ELBO is always a lower bound. Maximizing w.r.t. $\phi$ tightens the bound; maximizing w.r.t. $\theta$ improves the model.
-
-### Closed-Form KL for Gaussian Posteriors
-
-For $q_\phi = \mathcal{N}(\boldsymbol{\mu}, \text{diag}(\boldsymbol{\sigma}^2))$ and $p = \mathcal{N}(0, I)$, the KL has a closed form:
-
-$$\text{KL}(q_\phi \| p) = \frac{1}{2}\sum_i \left[\sigma_i^2 + \mu_i^2 - 1 - \log\sigma_i^2\right]$$
-
-Each term has an intuitive role:
-- $\sigma_i^2 - 1$: penalizes variance $\neq 1$
-- $\mu_i^2$: penalizes non-zero mean
-- $-\log\sigma_i^2$: entropy term preventing variance collapse to zero
-
-Gradients: $\partial \text{KL}_i / \partial \mu_i = \mu_i$ (push toward 0), $\partial \text{KL}_i / \partial \sigma_i^2 = \frac{1}{2}(1 - 1/\sigma_i^2)$ (push toward 1).
-
-### The Reparameterization Trick
-
-To compute $\nabla_\phi\,\mathbb{E}_{q_\phi}[\log p_\theta(\mathbf{x}|\mathbf{z})]$, we cannot naively move the gradient inside since $\phi$ parameterizes the sampling distribution. The **reparameterization trick** resolves this:
-
-1. Sample $\boldsymbol{\varepsilon} \sim \mathcal{N}(0, I)$ (independent of $\phi$)
-2. Set $\mathbf{z} = \boldsymbol{\mu}_\phi(\mathbf{x}) + \boldsymbol{\sigma}_\phi(\mathbf{x}) \odot \boldsymbol{\varepsilon}$
-
-Now $\mathbf{z}$ is a *deterministic function of $\phi$*, and gradients can flow through:
-
-$$\nabla_\phi\,\mathbb{E}_{q_\phi}[\log p_\theta(\mathbf{x}|\mathbf{z})] = \mathbb{E}_{\boldsymbol{\varepsilon}}\left[\nabla_\phi \log p_\theta(\mathbf{x}|\boldsymbol{\mu}_\phi + \boldsymbol{\sigma}_\phi \odot \boldsymbol{\varepsilon})\right]$$
-
-In practice, a single sample $\boldsymbol{\varepsilon}$ provides a low-variance, unbiased gradient estimate - enabling stable training. The backpropagation chain is:
-
-$$\frac{\partial}{\partial \phi}: \quad \frac{\partial \log p_\theta(\mathbf{x}|\mathbf{z})}{\partial \mathbf{z}} \cdot \begin{cases} \partial \mathbf{z}/\partial \boldsymbol{\mu} = I \\ \partial \mathbf{z}/\partial \boldsymbol{\sigma} = \text{diag}(\boldsymbol{\varepsilon}) \end{cases} \cdot \frac{\partial (\boldsymbol{\mu}, \boldsymbol{\sigma})}{\partial \phi}$$
-
-### Complete VAE Training Algorithm
-
-**Each minibatch step**:
-1. **Encode**: Compute $\boldsymbol{\mu}^{(i)} = \mu_\phi(x^{(i)})$, $\boldsymbol{\sigma}^{(i)} = \sigma_\phi(x^{(i)})$
-2. **Sample**: Draw $\boldsymbol{\varepsilon}^{(i)} \sim \mathcal{N}(0,I)$; set $z^{(i)} = \boldsymbol{\mu}^{(i)} + \boldsymbol{\sigma}^{(i)} \odot \boldsymbol{\varepsilon}^{(i)}$
-3. **Decode**: Compute $\log p_\theta(x^{(i)}|z^{(i)})$
-4. **Compute ELBO**: $\mathcal{L} = \frac{1}{B}\sum_i \log p_\theta(x^{(i)}|z^{(i)}) - \frac{1}{2B}\sum_i\sum_j\left[(\sigma^{(i)}_j)^2 + (\mu^{(i)}_j)^2 - 1 - \log(\sigma^{(i)}_j)^2\right]$
-5. **Update**: $\theta \leftarrow \theta + \eta\nabla_\theta\mathcal{L}$; $\phi \leftarrow \phi + \eta\nabla_\phi\mathcal{L}$
-
-**At test time**:
-- *Encode*: Use $\boldsymbol{\mu}_\phi(\mathbf{x})$ deterministically
-- *Generate*: Sample $\mathbf{z} \sim \mathcal{N}(0,I)$, decode $\hat{\mathbf{x}} = \mu_\theta(\mathbf{z})$
-
-### Practical Considerations
-
-**Variance parameterization**: Output $\log\sigma^2$ instead of $\sigma$ to guarantee positivity: `sigma = torch.exp(0.5 * log_var)`.
-
-**Loss implementation**:
-```python
-# Binary data
-recon_loss = F.binary_cross_entropy(x_hat, x, reduction='sum')
-
-# Continuous data (MSE ~ Gaussian likelihood with σ²=1)
-recon_loss = F.mse_loss(x_hat, x, reduction='sum')
-
-# KL term
-kl = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
-
-loss = recon_loss + kl  # minimize negative ELBO
-```
-
-**Posterior collapse**: When $q_\phi(\mathbf{z}|\mathbf{x}) \approx p(\mathbf{z})$ for all $\mathbf{x}$, the encoder ignores the input. This occurs when the decoder is powerful enough to model $p(\mathbf{x})$ without using $\mathbf{z}$. Mitigations:
-- **KL annealing**: Gradually increase KL weight $\beta_t$ from 0 to 1 during training
-- **Free bits**: Only penalize KL above threshold $\lambda$ per dimension: $\max(\lambda, \text{KL}_i)$
-- **Weaker decoder**: Constrain decoder capacity to force reliance on $\mathbf{z}$
-
-**Latent dimension**: Typical ranges - MNIST: $d = 2$–$50$; CelebA: $d = 128$–$512$; ImageNet: $d = 256$–$2048$. Monitor both reconstruction loss and KL divergence; near-zero KL signals underutilized latents.
-
-
-
-## VAE Variants and Extensions
-
-### β-VAE: Disentangled Representations
-
-β-VAE (Higgins et al., 2017) strengthens the KL penalty to encourage *disentanglement* - independent latent dimensions corresponding to independent factors of variation:
-
-$$\mathcal{L}_\beta = \mathbb{E}_{q_\phi}\left[\log p_\theta(\mathbf{x}|\mathbf{z})\right] - \beta \cdot \text{KL}(q_\phi(\mathbf{z}|\mathbf{x}) \| p(\mathbf{z}))$$
-
-**Why $\beta > 1$ promotes disentanglement**: With a factorized prior $p(\mathbf{z}) = \prod_i p(z_i)$, the KL term penalizes complex dependencies in $q_\phi(\mathbf{z}|\mathbf{x})$. Entangled factors increase KL; to minimize the $\beta$-weighted penalty, the model learns to separate independent factors into independent dimensions. This is the *information bottleneck* at work: $\mathcal{L}_\beta \approx \mathcal{R} - \beta \cdot I(X;Z)$ forces each dimension to encode maximum information about one factor rather than distributing it redundantly.
-
-**Trade-off**: Larger $\beta$ improves disentanglement but degrades reconstruction quality (blurrier outputs). Typical $\beta \in [2, 10]$.
-
-**Disentanglement metrics**: Mutual Information Gap (MIG), Separated Attribute Predictability (SAP), and DCI (Disentanglement-Completeness-Informativeness). All compare latent dimensions against ground-truth generative factors.
-
-**Theoretical caveat**: Locatello et al. (2019) showed unsupervised disentanglement is fundamentally impossible without inductive biases or weak supervision - different models with equal ELBO can learn different disentangled representations, indistinguishable by unsupervised metrics. Successful disentanglement requires architectural priors, weak supervision, or structured assumptions.
-
-### Conditional VAE (CVAE)
-
-Both encoder and decoder condition on auxiliary variable $\mathbf{c}$ (class labels, attributes, text):
-- Encoder: $q_\phi(\mathbf{z}|\mathbf{x}, \mathbf{c})$
-- Decoder: $p_\theta(\mathbf{x}|\mathbf{z}, \mathbf{c})$
-
-**Implementation**: Concatenate $\mathbf{c}$ to inputs of both networks.
-
-**Applications**:
-- *Class-conditional generation*: Fix desired $\mathbf{c}$, sample $\mathbf{z} \sim p(\mathbf{z})$, decode
-- *Semi-supervised learning*: Labeled pairs use $\mathbf{c}$ directly; unlabeled $\mathbf{x}$ marginalizes over classes
-- *Attribute manipulation*: Generate faces with specific attributes (age, expression, accessories)
-
-### Hierarchical VAEs
-
-Multiple stochastic layers model distributions at multiple abstraction levels. For two latent layers:
-
-$$\mathbf{z}_2 \sim p(\mathbf{z}_2), \qquad \mathbf{z}_1 \sim p_\theta(\mathbf{z}_1|\mathbf{z}_2), \qquad \mathbf{x} \sim p_\theta(\mathbf{x}|\mathbf{z}_1, \mathbf{z}_2)$$
-
-The ELBO extends with conditional KL terms at each layer. Benefits: greater capacity, hierarchical features (global semantics in $\mathbf{z}_2$, local details in $\mathbf{z}_1$), and reduced posterior collapse. **Ladder VAE** combines top-down and bottom-up paths with skip connections for improved gradient flow.
-
-### Discrete Latent Variables and VQ-VAE
-
-Discrete latents offer interpretability and compatibility with autoregressive priors.
-
-**Gumbel-Softmax** (Jang et al., 2017): Differentiable approximation to categorical sampling. Sample $g_k \sim \text{Gumbel}(0,1)$; relax the argmax with a softmax at temperature $\tau$:
-
-$$z_k = \frac{\exp((\log\pi_k + g_k)/\tau)}{\sum_j \exp((\log\pi_j + g_j)/\tau)}$$
-
-As $\tau \to 0$, this approaches one-hot sampling. Training uses annealing from high $\tau$ (smooth) toward 0 (discrete).
-
-**VQ-VAE** (van den Oord et al., 2017) uses a learned discrete **codebook** $\{e_1, \ldots, e_K\} \subset \mathbb{R}^d$. The encoder produces $z_e(\mathbf{x})$; quantization maps it to the nearest codebook vector:
-
-$$z_q(\mathbf{x}) = e_k, \qquad k = \arg\min_j \|z_e(\mathbf{x}) - e_j\|^2$$
-
-Training uses: (1) a *straight-through estimator* (copy gradients from $z_q$ to $z_e$); (2) a *commitment loss* $\|z_e - \text{sg}[z_q]\|^2$; (3) a *codebook loss* $\|\text{sg}[z_e] - z_q\|^2$. Advantages: no posterior collapse, supports autoregressive priors over discrete codes, interpretable assignments. **VQ-VAE-2** (Razavi et al., 2019) extends this hierarchically to produce high-fidelity $1024\times1024$ images.
-
-
-
-## Applications
-
-### Dimensionality Reduction and Visualization
-
-Autoencoders provide *nonlinear* dimensionality reduction, complementing linear PCA. With $d = 2$ or $d = 3$, latent codes enable direct visualization. Unlike t-SNE/UMAP (which provide static embeddings), autoencoders learn explicit mappings that generalize to new data.
-
-**Semantic interpolation** (VAEs): Interpolating between two latent codes and decoding produces semantically meaningful morphing sequences - e.g., a smooth face-to-face transition.
-
-### Anomaly Detection
-
-Autoencoders trained on normal data reconstruct normal examples well but fail on anomalies. Reconstruction error serves as an anomaly score:
-1. Train on normal data
-2. Set threshold $\tau$ (e.g., 95th percentile of validation errors)
-3. Flag $\mathbf{x}_\text{test}$ as anomaly if $\|\mathbf{x}_\text{test} - f(\mathbf{x}_\text{test})\|^2 > \tau$
-
-Applications span fraud detection, network intrusion, manufacturing defects, and medical imaging. For VAEs, the ELBO provides a richer anomaly score incorporating both reconstruction quality and KL divergence.
-
-### Image Denoising and Inpainting
-
-Denoising autoencoders naturally extend to practical denoising: feed noisy image, receive denoised output. Works for Gaussian noise, salt-and-pepper noise, JPEG artifacts, and sensor noise. **Inpainting** reconstructs missing regions by masking pixels during training and learning to predict them from visible context. Combining with adversarial training (VAE-GAN) produces sharper results.
-
-### Representation Learning and Transfer
-
-Pre-train an autoencoder on large *unlabeled* data, then fine-tune the encoder for supervised tasks on small labeled datasets. This leverages abundant unlabeled data to improve initialization, reduce labeled data requirements, and improve generalization. While contrastive methods (SimCLR, MoCo) and masked language modeling (BERT) dominate modern self-supervised learning, autoencoders remain valuable in domains with rich unlabeled data and limited labels.
-
-### Generative Modeling
-
-VAEs enable **latent space arithmetic** for disentangled representations:
-
-$$\mathbf{z}_\text{glasses} = \mathbf{z}_\text{man+glasses} - \mathbf{z}_\text{man}$$
-
-Adding this "glasses vector" to any face code adds glasses. Applications include data augmentation, creative content generation, drug discovery (molecular structures), and scientific simulation.
-
-### Lossy Compression
-
-Autoencoders compress data at ratio $D/d$, trading distortion against rate. End-to-end learned compression (Ballé et al., 2018) - using convolutional VAEs with quantized latents and arithmetic coding - matches or exceeds JPEG/JPEG2000 on rate-distortion curves, especially at low bitrates.
-
-
-
-## Theoretical Connections
-
-### Information Theory and VAEs
-
-The VAE objective directly instantiates rate-distortion optimization:
-
-$$\max\; \mathbb{E}[\log p_\theta(\mathbf{x}|\mathbf{z})] - I(X;Z)$$
-
-since $\mathbb{E}_\mathbf{x}[\text{KL}(q_\phi(\mathbf{z}|\mathbf{x}) \| p(\mathbf{z}))] = I(X;Z)$. This balances low distortion (high reconstruction likelihood) against low rate (small mutual information). β-VAE makes this explicit: $\beta > 1$ tightens the rate constraint; $\beta < 1$ relaxes it.
-
-### Bayesian Inference and Amortized Variational Inference
-
-VAEs exemplify **amortized variational inference**: rather than solving a separate optimization for each $\mathbf{x}$, a single inference network $q_\phi(\mathbf{z}|\mathbf{x})$ generalizes across all observations. The fundamental identity:
-
-$$\log p_\theta(\mathbf{x}) = \mathcal{L}(\theta, \phi;\, \mathbf{x}) + \text{KL}(q_\phi(\mathbf{z}|\mathbf{x}) \| p_\theta(\mathbf{z}|\mathbf{x}))$$
-
-shows that maximizing the ELBO simultaneously: (1) maximizes model evidence and (2) minimizes approximation error to the true posterior.
-
-### Connections to Other Generative Models
-
-| Model | Likelihood | Training | Latent Space | Sample Quality |
-|---|---|---|---|---|
-| VAE | Explicit (approx.) | Stable | Structured | Blurry |
-| GAN | Implicit | Unstable | Less structured | Sharp |
-| Normalizing Flow | Exact | Stable | Deterministic map | Good |
-| Autoregressive | Exact | Stable | None | Excellent (slow) |
-
-Key hybrids: **VAE-GAN** combines VAE structure with adversarial decoding for sharper outputs; **VQ-VAE + PixelCNN** gains both latent structure and autoregressive generation quality; **Flow-based posteriors** (IAF, MAF) use normalizing flows for $q_\phi(\mathbf{z}|\mathbf{x})$, combining VAE flexibility with flow expressiveness.
-
-
-
-## Conclusion
-
-Autoencoders and VAEs have evolved from simple dimensionality reduction tools into sophisticated generative models with deep theoretical foundations. Key themes:
-
-- **Manifold hypothesis**: Data concentrates near low-dimensional manifolds; autoencoders discover and parameterize these structures
-- **Probabilistic framework**: VAEs unify generation, inference, and regularization through the ELBO
-- **Information-theoretic grounding**: Rate-distortion theory and the information bottleneck formalize the compression-distortion trade-off
-- **Architectural flexibility**: The same principles scale from linear PCA to deep hierarchical networks
-
-**Open challenges**: Sample quality (blurriness vs. GANs/diffusion), posterior collapse, unsupervised disentanglement, evaluation metrics, and scalability to very high resolutions.
-
-**Future directions**: Hybrid models (latent diffusion shows promise), improved priors beyond simple Gaussians, discrete VQ-VAE extensions, and theoretical characterization of when VAEs succeed or fail.
+---
+*Continue to **[Chapter 8: State Space Models & Mamba — The Sequence Revolution](/DeepLearning/08_Mamba_and_SSMs.md)***

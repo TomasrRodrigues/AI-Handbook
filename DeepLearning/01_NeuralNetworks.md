@@ -78,7 +78,10 @@ $$W^{(L)}\bigl(W^{(L-1)}(\cdots(W^{(1)}x + b^{(1)})\cdots) + b^{(L-1)}\bigr) + b
 
 for some combined $W$ and $b$. This algebraic collapse is the mathematical reason the First AI Winter happened - without nonlinearity, depth is illusion.
 
-> TODO: <DIAGRAM: A layered feedforward network with nodes labeled x (input), z (pre-activation), a (post-activation), and y-hat (output). Arrows show the forward flow, with the weight matrix W annotated on each connection set. A separate panel shows the two-step computation z = Wx + b → a = σ(z) as a flowchart.>
+<div align="center">
+  <img src="./data/01_layeredfeedforward.png" width="500"/>
+  <p><b>Figure 1.1:</b> The Architecture of a Neural Network and Its Internal Computation</p>
+</div>
 
 ## 1.4 Linear Algebra: The Language of Intelligence
 
@@ -92,7 +95,11 @@ These properties are not merely aesthetic. During training, the **Hessian** matr
 
 For a researcher, the geometric intuition translates directly into theoretical results. The capacity of a linear layer to separate classes is governed by its Rademacher complexity, which depends on the spectral norm of $W$. This is why **spectral normalization** - constraining the largest singular value - is the key to stable GAN training.
 
-> TODO: <DIAGRAM: A 2D vector space shown before and after multiplication by a matrix W. Arrows show the original basis vectors and their transformed versions, illustrating stretching and rotation. A separate panel shows an ellipse (image of the unit ball under W) with principal axes labeled by singular values σ₁ and σ₂.>
+
+<div align="center">
+  <img src="./data/01_geometrictransformations.png" width="500"/>
+  <p><b>Figure 1.2:</b> Geometric Transformations of Vector Space and Unit Ball</p>
+</div>
 
 
 ## 1.5 The Universal Approximation Theorem: Power and its Limits
