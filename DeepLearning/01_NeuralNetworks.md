@@ -5,7 +5,7 @@
     <i>"The brain is wider than the sky"</i>
   </p>
   <p style="font-size: 0.9em; color: #777;">
-    — Emily Dickinson
+    Emily Dickinson
   </p>
 </div>
 
