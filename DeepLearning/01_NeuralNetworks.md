@@ -159,7 +159,10 @@ ReLU has its own pathology: the **dying neuron problem**. If a neuron's pre-acti
 
 Modern architectures increasingly use smoother variants. **GELU** (Gaussian Error Linear Unit), defined as $\text{GELU}(z) = z \cdot \Phi(z)$ where $\Phi$ is the standard normal CDF, and **Swish** $\text{Swish}(z) = z \cdot \sigma(z)$ are non-monotonic, smooth approximations to ReLU that often outperform it in Transformer architectures. They can be interpreted as "stochastic gates" - the activation weights the input by its probability of being positive, implicitly performing a kind of learned regularization.
 
-> TODO: <DIAGRAM: Four panels showing Sigmoid, Tanh, ReLU, and GELU on the same axis range (-3, 3). Each panel includes both the function and its derivative. Annotations highlight: saturation regions for sigmoid/tanh, the gradient of 1 for ReLU, and the non-monotonic region of GELU.>
+<div align="center">
+  <img src="./data/01_activation_functions_comparison.png" width="500"/>
+  <p><b>Figure 1.3:</b> Sigmoid, Tanh, ReLU and GELU functions and derivatives</p>
+</div>
 
 The choice of activation function is not cosmetic. It determines gradient flow, optimization dynamics, and ultimately whether a network with a given depth and architecture is trainable at all. The right activation for a given depth, initialization scheme, and task is a design decision with profound mathematical consequences.
 
@@ -244,7 +247,10 @@ $$\text{head}_i = \text{Attention}(XW_i^Q, XW_i^K, XW_i^V)$$
 
 Each head can learn to attend to different types of relationships - one head might capture syntactic structure, another semantic similarity. The full Transformer architecture interleaves self-attention blocks with feedforward layers and layer normalization, creating a deep stack capable of learning extraordinarily rich representations from sequence data.
 
-> TODO: <DIAGRAM: A side-by-side comparison. Left panel: an RNN unrolled over five time steps, showing sequential dependence and the single hidden state flowing left-to-right. Right panel: a Transformer attention map showing a 5×5 grid where all positions can attend to all others simultaneously. Color intensity indicates attention weight.>
+<div align="center">
+  <img src="./data/01_architectural_ai_comparison.png" width="500"/>
+  <p><b>Figure 1.4:</b> Side by side comparison of RNN and Transformer attention map</p>
+</div>
 
 
 ## 1.10 Weight Initialization: Starting on the Right Foot

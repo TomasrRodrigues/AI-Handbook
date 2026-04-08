@@ -109,7 +109,10 @@ Each fraction is a local sensitivity. The chain rule says: multiply them all tog
 
 **For a 4-layer network:** The loss $\mathcal{L}$ depends on Layer 4's output, which depends on Layer 3's output, which depends on Layer 2's, which depends on Layer 1's, which depends on the weights. The gradient with respect to a weight in Layer 1 is a product of four local sensitivities - one for each layer in between. Backpropagation computes this product efficiently by accumulating from the output backward.
 
-> TODO: <!-- DIAGRAM: [Four boxes: "Layer 1" → "Layer 2" → "Layer 3" → "Loss $\mathcal{L}$". Blue arrows flow right (forward: data). Red arrows flow left (backward: error signal). Above each red arrow: the local derivative at that step. Below the diagram: "Gradient at Layer 1 = (local sensitivity at Layer 1) × (local sensitivity at Layer 2) × (local sensitivity at Layer 3) × (sensitivity of Loss)". Caption: "The chain rule converts the daunting question 'how does this first-layer weight affect the final loss?' into a product of manageable local sensitivities, each computable from quantities already stored during the forward pass".] -->
+<div align="center">
+  <img src="./data/02_backpropagationgradient.png" width="500"/>
+  <p><b>Figure 2.1:</b> Calculus and work of backpropagation in the gradient of a layer</p>
+</div>
 
 
 
